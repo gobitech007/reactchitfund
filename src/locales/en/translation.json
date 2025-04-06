@@ -1,0 +1,121 @@
+{
+  "common": {
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "optional": "Optional"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "header": {
+    "brand": "SM Chit Fund with Snacks",
+    "dashboard": "Dashboard",
+    "pay": "Pay",
+    "transaction": "Transaction",
+    "register": "Register"
+  },
+  "dashboard": {
+    "registeredUsers": "Registered Users",
+    "totalUsers": "Total registered users",
+    "todayTransactions": "Today's Transactions",
+    "transactionsToday": "Transactions completed today",
+    "monthlyTransactions": "Monthly Transactions",
+    "transactionsThisMonth": "Transactions this month",
+    "totalAmount": "Total Amount",
+    "totalCompletedTransactions": "Total completed transactions",
+    "summary": "Summary",
+    "welcomeMessage": "Welcome to the SMC Chit Fund dashboard. Here you can see an overview of your system's performance."
+  },
+  "transactionHistory": {
+    "title": "Transaction History",
+    "noTransactions": "No transactions found",
+    "columns": {
+      "transactionId": "Transaction ID",
+      "date": "Date",
+      "amount": "Amount (₹)",
+      "mobileNumber": "Mobile Number",
+      "status": "Status"
+    },
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "rowsPerPage": "Rows per page:"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "forgotPassword": "Forgot Password?",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "mobileNumber": "Mobile Number",
+    "dateOfBirth": "Date of Birth",
+    "aadharNumber": "Aadhar Number",
+    "loginForm": "Login",
+    "registerForm": "Registration Form",
+    "forgotPasswordForm": "Forgot Password",
+    "passwordResetInstructions": "Enter your email address and we'll send you a link to reset your password.",
+    "resetLinkSent": "If an account exists with the email {email}, you will receive password reset instructions.",
+    "sendResetLink": "Send Reset Link",
+    "emailSent": "Email Sent",
+    "rememberPassword": "Remember your password?",
+    "backToLogin": "Back to Login",
+    "dontHaveAccount": "Don't have an account?",
+    "registerHere": "Register here",
+    "clear": "Clear",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "invalidEmail": "Please enter a valid email address",
+    "mobile": "Mobile",
+    "aadhar": "Aadhar"
+  },
+  "pay": {
+    "weekSelection": "Week Selection",
+    "weekOf": "Week {week} of {month}",
+    "selectCells": "Select up to {max} cells from the grid below. Grayed-out cells are already taken.",
+    "selectedCells": "You have selected {count} cell(s): {cells}",
+    "confirmSelection": "Confirm Selection",
+    "clearSelection": "Clear Selection",
+    "maxSelectionWarning": "You can only select up to {max} cells",
+    "selectAtLeastOne": "Please select at least one cell",
+    "selectionSuccess": "Successfully selected cells: {cells}"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordMismatch": "Passwords do not match",
+    "minLength": "Must be at least {{count}} characters",
+    "invalidMobile": "Please enter a valid mobile number",
+    "invalidAadhar": "Please enter a valid Aadhar number",
+    "minAge": "You must be at least {{age}} years old"
+  },
+  "language": {
+    "english": "English",
+    "hindi": "Hindi",
+    "tamil": "Tamil",
+    "selectLanguage": "Select Language"
+  },
+  "time": {
+    "year": "Year",
+    "month": "Month",
+    "day": "Day",
+    "format": "Format"
+  }
+}

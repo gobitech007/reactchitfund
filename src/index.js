@@ -1,13 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { CssBaseline} from '@mui/material';
+
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ThemeProvider } from './view/ThemeContext';
+import './i18n'; // Import i18n configuration
+import I18nProvider from './components/I18nProvider';
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <ThemeProvider>
+        <CssBaseline />
+        <I18nProvider>
+          <App />        
+        </I18nProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
 

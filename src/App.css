@@ -1,3 +1,5 @@
+@import './assets/theme.sass';
+@import './assets/main.sass';
 .App {
   text-align: center;
 }
@@ -13,17 +15,6 @@
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
 .App-link {
   color: #61dafb;
 }
@@ -35,4 +26,10 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.logo-img-adjust {
+    height: 65px;
+    margin-top: -17px;
+    margin-bottom: -16px;
 }

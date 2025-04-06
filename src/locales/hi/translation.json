@@ -1,0 +1,122 @@
+{
+  "common": {
+    "search": "खोज",
+    "filter": "फ़िल्टर",
+    "loading": "लोड हो रहा है...",
+    "noResults": "कोई परिणाम नहीं मिला",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "edit": "संपादित करें",
+    "delete": "हटाएं",
+    "submit": "जमा करें",
+    "back": "वापस",
+    "next": "अगला",
+    "previous": "पिछला",
+    "optional": "वैकल्पिक"
+  },
+  "navigation": {
+    "home": "होम",
+    "dashboard": "डैशबोर्ड",
+    "transactions": "लेनदेन",
+    "profile": "प्रोफाइल",
+    "settings": "सेटिंग्स",
+    "logout": "लॉगआउट"
+  },
+  "header": {
+    "brand": "एसएम चिट फंड",
+    "dashboard": "डैशबोर्ड",
+    "pay": "भुगतान",
+    "transaction": "लेनदेन",
+    "register": "पंजीकरण"
+  },
+  "dashboard": {
+    "registeredUsers": "पंजीकृत उपयोगकर्ता",
+    "totalUsers": "कुल पंजीकृत उपयोगकर्ता",
+    "todayTransactions": "आज के लेनदेन",
+    "transactionsToday": "आज पूरे किए गए लेनदेन",
+    "monthlyTransactions": "मासिक लेनदेन",
+    "transactionsThisMonth": "इस महीने के लेनदेन",
+    "totalAmount": "कुल राशि",
+    "totalCompletedTransactions": "कुल पूर्ण लेनदेन",
+    "summary": "सारांश",
+    "welcomeMessage": "SMC चिट फंड डैशबोर्ड में आपका स्वागत है। यहां आप अपने सिस्टम के प्रदर्शन का अवलोकन देख सकते हैं।"
+  },
+  "transactionHistory": {
+    "title": "लेनदेन इतिहास",
+    "noTransactions": "कोई लेनदेन नहीं मिला",
+    "columns": {
+      "transactionId": "लेनदेन आईडी",
+      "date": "तारीख",
+      "amount": "राशि (₹)",
+      "mobileNumber": "मोबाइल नंबर",
+      "status": "स्थिति"
+    },
+    "status": {
+      "completed": "पूर्ण",
+      "pending": "अपूर्ण",
+      "failed": "विफल"
+    },
+    "rowsPerPage": "प्रति पृष्ठ पंक्तियाँ:"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "register": "रजिस्टर",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "fullName": "पूरा नाम",
+    "mobileNumber": "मोबाइल नंबर",
+    "dateOfBirth": "जन्म तिथि",
+    "aadharNumber": "आधार नंबर",
+    "loginForm": "लॉगिन",
+    "registerForm": "पंजीकरण फॉर्म",
+    "forgotPasswordForm": "पासवर्ड भूल गए",
+    "passwordResetInstructions": "अपना ईमेल पता दर्ज करें और हम आपको अपना पासवर्ड रीसेट करने के लिए एक लिंक भेजेंगे।",
+    "resetLinkSent": "यदि ईमेल {email} के साथ एक खाता मौजूद है, तो आपको पासवर्ड रीसेट निर्देश प्राप्त होंगे।",
+    "sendResetLink": "रीसेट लिंक भेजें",
+    "emailSent": "ईमेल भेज दिया गया",
+    "rememberPassword": "अपना पासवर्ड याद है?",
+    "backToLogin": "लॉगिन पर वापस जाएं",
+    "dontHaveAccount": "खाता नहीं है?",
+    "registerHere": "यहां रजिस्टर करें",
+    "clear": "साफ़ करें",
+    "passwordMinLength": "पासवर्ड कम से कम 6 अक्षर का होना चाहिए",
+    "invalidEmail": "कृपया एक वैध ईमेल पता दर्ज करें",
+    "mobile": "मोबाइल",
+    "aadhar": "आधार"
+  },
+  "pay": {
+    "weekSelection": "सप्ताह चयन",
+    "weekOf": "{month} का {week} सप्ताह",
+    "selectCells": "नीचे दिए गए ग्रिड से अधिकतम {max} सेल चुनें। धूसर सेल पहले से ही लिए जा चुके हैं।",
+    "selectedCells": "आपने {count} सेल चुने हैं: {cells}",
+    "confirmSelection": "चयन की पुष्टि करें",
+    "clearSelection": "चयन साफ़ करें",
+    "maxSelectionWarning": "आप केवल {max} सेल तक ही चुन सकते हैं",
+    "selectAtLeastOne": "कृपया कम से कम एक सेल चुनें",
+    "selectionSuccess": "सफलतापूर्वक चुने गए सेल: {cells}"
+  },
+  "validation": {
+    "required": "यह फ़ील्ड आवश्यक है",
+    "invalidEmail": "कृपया एक वैध ईमेल पता दर्ज करें",
+    "passwordMismatch": "पासवर्ड मेल नहीं खाते",
+    "minLength": "कम से कम {{count}} अक्षर होने चाहिए",
+    "invalidMobile": "कृपया एक वैध मोबाइल नंबर दर्ज करें",
+    "invalidAadhar": "कृपया एक वैध आधार नंबर दर्ज करें",
+    "minAge": "आपकी आयु कम से कम {{age}} वर्ष होनी चाहिए"
+  },
+  "language": {
+    "english": "अंग्रेज़ी",
+    "hindi": "हिंदी",
+    "marathi": "मराठी",
+    "tamil": "तमिल",
+    "selectLanguage": "भाषा चुनें"
+  },
+  "time": {
+    "year": "वर्ष",
+    "month": "महीना",
+    "day": "दिन",
+    "format": "प्रारूप"
+  }
+}

@@ -1,4 +1,92 @@
-# Getting Started with Create React App
+# SM Chit Fund React Application
+
+This is a React application for managing chit funds.
+
+## Internationalization (i18n)
+
+The application supports multiple languages:
+- English (en)
+- Hindi (hi)
+- Marathi (mr)
+- Tamil (ta)
+
+### How to Use Translations
+
+1. Import the translation hook in your component:
+```jsx
+import { useTranslation } from 'react-i18next';
+```
+
+2. Use the hook to access the translation function:
+```jsx
+const { t } = useTranslation();
+```
+
+3. Use the translation function to translate text:
+```jsx
+<Typography>{t('common.search')}</Typography>
+```
+
+### Adding New Translations
+
+1. Add new translation keys to the JSON files in the `src/locales` directory.
+2. Follow the existing structure with namespaces (e.g., `common`, `auth`, etc.).
+3. Make sure to add translations for all supported languages.
+
+### Adding a New Language
+
+1. Create a new translation file in the `src/locales` directory.
+2. Add the language to the `languages` array in the `LanguageSelector.tsx` component.
+3. Import and add the new language resource in the `i18n.ts` file.
+
+## Environment Configuration
+
+The application uses environment variables to configure different environments (development, staging, production). These are managed through `.env` files:
+
+- `.env`: Default environment variables for all environments
+- `.env.development`: Environment variables for development (used with `npm start`)
+- `.env.staging`: Environment variables for staging
+- `.env.production`: Environment variables for production
+
+### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| REACT_APP_API_URL | Backend API URL | http://localhost:8000/api |
+| REACT_APP_ENV | Current environment | development |
+| REACT_APP_DEBUG | Enable debug logging | true |
+
+### Adding New Environment Variables
+
+1. Add the variable to the appropriate `.env` file(s)
+2. Make sure to prefix with `REACT_APP_` for Create React App to recognize it
+3. Access in code using `process.env.REACT_APP_VARIABLE_NAME`
+
+## Available Scripts
+
+In the project directory, you can run:
+
+### `npm start`
+
+Runs the app in the development mode using `.env.development` configuration.\
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
+### `npm run build`
+
+Builds the app for production to the `build` folder using `.env.production` configuration.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
+### `npm run build:staging`
+
+Builds the app for staging environment using `.env.staging` configuration.
+
+### `npm run build:prod`
+
+Builds the app for production environment using `.env.production` configuration.
+
+### `npm test`
+
+Launches the test runner in the interactive watch mode.# Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
