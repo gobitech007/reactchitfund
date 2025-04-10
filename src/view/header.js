@@ -13,7 +13,6 @@ function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { logout, isAuthenticated, currentUser, login } = useAuth();
-
   // Make login function available globally for class components
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -75,7 +74,7 @@ function Header() {
               {isAuthenticated() && (
                 <div className="d-flex align-items-center">
                   <span className="navbar-text text-white me-3">
-                    {currentUser?.name || currentUser?.email}
+                    {currentUser?.fullname}
                   </span>
                   <button
                     className="btn btn-outline-light btn-sm"

@@ -232,7 +232,13 @@ export const PaymentService = {
     }
     
     return { isValid: true };
-  }
+  },
+
+  /**Chit user Details */
+  getChitUsers: async (user_id: string) => {
+    return await ApiService.get<{ status: PaymentStatus }>(`/payments/chits/user/${user_id}`);
+  },
+
 };
 
 /**

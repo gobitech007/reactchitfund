@@ -113,7 +113,10 @@ export const apiRequest = async <T = any>(
 
     // Add request body if provided (and not GET request)
     if (options.body && options.method !== HttpMethod.GET) {
+      // Log the request body for debugging
+      console.log('Request body before serialization:', options.body);
       requestOptions.body = JSON.stringify(options.body);
+      console.log('Request body after serialization:', requestOptions.body);
     }
 
     // Make the request
@@ -123,9 +126,33 @@ export const apiRequest = async <T = any>(
 
     // Handle API errors
     if (!response.ok) {
+      console.error('API Error Response:', response.status, response.statusText, data);
+      let errorMessage = data?.detail || data?.message || `API Error: ${response.status} ${response.statusText}`;
+      
+      // Handle validation errors (422 Unprocessable Entity)
+      if (response.status === 422 && data?.detail) {
+        try {
+          // FastAPI validation errors are typically in the format:
+          // { "detail": [ { "loc": ["body", "field_name"], "msg": "error message", "type": "error_type" } ] }
+          interface ValidationError {
+            loc: string[];
+            msg: string;
+            type: string;
+          }
+          
+          if (Array.isArray(data.detail)) {
+            errorMessage = data.detail.map((err: ValidationError) => 
+              `${err.loc[err.loc.length - 1]}: ${err.msg}`
+            ).join(', ');
+          }
+        } catch (e) {
+          console.error('Error parsing validation errors:', e);
+        }
+      }
+      
       return {
         data: null,
-        error: data?.message || `API Error: ${response.status} ${response.statusText}`,
+        error: errorMessage,
         status: response.status
       };
     }
@@ -161,6 +188,10 @@ export const apiRequest = async <T = any>(
   }
 };
 
+export const getToken = () => {
+  return localStorage.getItem('authToken');
+};
+
 /**
  * Helper methods for common HTTP requests
  */
@@ -174,8 +205,11 @@ export const ApiService = {
   get: <T = any>(
     endpoint: string,
     params?: Record<string, string>,
-    headers?: Record<string, string>
+    headers: Record<string, string> = {}
   ): Promise<ApiResponse<T>> => {
+    if (getToken()) {
+      headers['Authorization'] = `Bearer ${getToken()}`;
+    }
     return apiRequest<T>(endpoint, {
       method: HttpMethod.GET,
       params,
@@ -192,8 +226,11 @@ export const ApiService = {
   post: <T = any>(
     endpoint: string,
     body?: any,
-    headers?: Record<string, string>
+    headers: Record<string, string> = {}
   ): Promise<ApiResponse<T>> => {
+    if (getToken()) {
+      headers['Authorization'] = `Bearer ${getToken()}`;
+    }
     return apiRequest<T>(endpoint, {
       method: HttpMethod.POST,
       body,
@@ -210,8 +247,11 @@ export const ApiService = {
   put: <T = any>(
     endpoint: string,
     body?: any,
-    headers?: Record<string, string>
+    headers: Record<string, string> = {}
   ): Promise<ApiResponse<T>> => {
+    if (getToken()) {
+      headers['Authorization'] = `Bearer ${getToken()}`;
+    }
     return apiRequest<T>(endpoint, {
       method: HttpMethod.PUT,
       body,
@@ -228,8 +268,11 @@ export const ApiService = {
   delete: <T = any>(
     endpoint: string,
     params?: Record<string, string>,
-    headers?: Record<string, string>
+    headers: Record<string, string> = {}
   ): Promise<ApiResponse<T>> => {
+    if (getToken()) {
+      headers['Authorization'] = `Bearer ${getToken()}`;
+    }
     return apiRequest<T>(endpoint, {
       method: HttpMethod.DELETE,
       params,
@@ -246,8 +289,11 @@ export const ApiService = {
   patch: <T = any>(
     endpoint: string,
     body?: any,
-    headers?: Record<string, string>
+    headers: Record<string, string> = {}
   ): Promise<ApiResponse<T>> => {
+    if (getToken()) {
+      headers['Authorization'] = `Bearer ${getToken()}`;
+    }
     return apiRequest<T>(endpoint, {
       method: HttpMethod.PATCH,
       body,

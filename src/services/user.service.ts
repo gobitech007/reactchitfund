@@ -4,7 +4,7 @@
  */
 
 import ApiService from './api.service';
-import { User } from './auth.service';
+import { RegisterRequest, User } from './auth.service';
 
 // User profile update request
 export interface UserUpdateRequest {
@@ -134,8 +134,8 @@ export const UserService = {
    * @param userData - User data for new user
    * @returns Promise with created user data
    */
-  createUser: async (userData: any) => {
-    return await ApiService.post<User>('/admin/users', userData);
+  createUser: async (userData: RegisterRequest) => {
+    return await ApiService.post<User>('/users', userData);
   }
 };
 

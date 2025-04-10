@@ -326,6 +326,7 @@ export interface RegisterState {
   birthMonth: number | string;
   birthYear: number | string;
   aadharNumber: string;
+  pin: string;
   errors: FormErrors;
 }
 
@@ -347,6 +348,7 @@ export const handleEmptyInput = (): RegisterState => {
     birthMonth: "",
     birthYear: "",
     aadharNumber: "",
+    pin: "",
     errors: {
       fullName: "",
       email: "",

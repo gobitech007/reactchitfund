@@ -33,12 +33,12 @@ interface LoginPropsWithTranslation extends LoginProps {
 interface LoginState {
   loginMethod: 'email' | 'mobile' | 'aadhar';
   email: string;
-  mobileNumber: string;
+  phone: string;
   aadharNumber: string;
   password: string;
   errors: {
     email: string;
-    mobileNumber: string;
+    phone: string;
     aadharNumber: string;
     password: string;
   };
@@ -50,12 +50,12 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
     this.state = {
       loginMethod: 'email',
       email: "",
-      mobileNumber: "",
+      phone: "",
       aadharNumber: "",
       password: "",
       errors: {
         email: "",
-        mobileNumber: "",
+        phone: "",
         aadharNumber: "",
         password: "",
       },
@@ -76,8 +76,8 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
       case "email":
         errors.email = validateEmail(value) ? "" : "Please enter a valid email address";
         break;
-      case "mobileNumber":
-        errors.mobileNumber = validateMobileNumber(value) ? "" : "Please enter a valid mobile number";
+      case "phone":
+        errors.phone = validateMobileNumber(value) ? "" : "Please enter a valid mobile number";
         break;
       case "aadharNumber":
         errors.aadharNumber = validateAadharNumber(value) ? "" : "Please enter a valid Aadhar number";
@@ -96,12 +96,12 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
   };
 
   isFormValid = () => {
-    const { loginMethod, email, mobileNumber, aadharNumber, password, errors } = this.state;
+    const { loginMethod, email, phone, aadharNumber, password, errors } = this.state;
 
     // Check if the selected identifier is filled
     if (
       (loginMethod === 'email' && !email) ||
-      (loginMethod === 'mobile' && !mobileNumber) ||
+      (loginMethod === 'mobile' && !phone) ||
       (loginMethod === 'aadhar' && !aadharNumber)
     ) {
       return false;
@@ -110,7 +110,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
     // Check if there are any validation errors for the current login method
     if (
       (loginMethod === 'email' && errors.email) ||
-      (loginMethod === 'mobile' && errors.mobileNumber) ||
+      (loginMethod === 'mobile' && errors.phone) ||
       (loginMethod === 'aadhar' && errors.aadharNumber) ||
       (password && errors.password)
     ) {
@@ -126,16 +126,17 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
 
   handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const { loginMethod, email, mobileNumber, aadharNumber, password } = this.state;
+    const { loginMethod, email, phone, aadharNumber, password } = this.state;
 
     if (this.isFormValid()) {
       try {
         // Form is valid, proceed with submission
         const credentials: {
           email?: string;
-          mobileNumber?: string;
+          phone?: string;
           aadharNumber?: string;
           password?: string;
+          pin?: string;
         } = {};
 
         // Add password if provided
@@ -147,7 +148,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
         if (loginMethod === 'email') {
           credentials.email = email;
         } else if (loginMethod === 'mobile') {
-          credentials.mobileNumber = mobileNumber;
+          credentials.phone = phone;
         } else if (loginMethod === 'aadhar') {
           credentials.aadharNumber = aadharNumber;
         }
@@ -168,7 +169,9 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
           const success = await window.login(loginCredentials);
 
           if (success) {
-            console.log("Login successful");
+            if (this.props.navigate) {
+              this.props.navigate('/dashboard');
+            }
             // Navigation is now handled in the AuthContext
             // No need to navigate here as it's done in the context
           } else {
@@ -185,8 +188,18 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
             alert(`Login failed: ${response.error}`);
           } else {
             alert("Login successful!");
-            // Navigation is now handled in the AuthContext
-            // No need to navigate here as it's done in the context
+            
+            // Store the token in localStorage (already done in AuthService.login)
+            
+            // Store user data if available
+            // if (response.data && response.data.user) {
+            //   localStorage.setItem('user', JSON.stringify(response.data.user));
+            // }
+            
+            // Navigate to dashboard
+            if (this.props.navigate) {
+              this.props.navigate('/dashboard');
+            }
           }
         }
       } catch (error) {
@@ -202,12 +215,12 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
   handleClear = () => {
     this.setState({
       email: "",
-      mobileNumber: "",
+      phone: "",
       aadharNumber: "",
       password: "",
       errors: {
         email: "",
-        mobileNumber: "",
+        phone: "",
         aadharNumber: "",
         password: "",
       },
@@ -289,31 +302,31 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
                 <Grid size={12}>
                   <TextField
                     fullWidth
-                    label={t('auth.mobileNumber')}
-                    name="mobileNumber"
+                    label={t('auth.phone')}
+                    name="phone"
                     type="tel"
-                    value={this.state.mobileNumber}
+                    value={this.state.phone}
                     onChange={this.handleChange}
-                    error={errors.mobileNumber !== ""}
-                    helperText={errors.mobileNumber}
+                    error={errors.phone !== ""}
+                    helperText={errors.phone}
                     required
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
                           borderColor:
-                            this.state.mobileNumber && errors.mobileNumber === ""
+                            this.state.phone && errors.phone === ""
                               ? "green"
                               : "",
                         },
                         "&:hover fieldset": {
                           borderColor:
-                            this.state.mobileNumber && errors.mobileNumber === ""
+                            this.state.phone && errors.phone === ""
                               ? "green"
                               : "",
                         },
                         "&.Mui-focused fieldset": {
                           borderColor:
-                            this.state.mobileNumber && errors.mobileNumber === ""
+                            this.state.phone && errors.phone === ""
                               ? "green"
                               : "",
                         },

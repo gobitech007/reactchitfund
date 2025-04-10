@@ -71,6 +71,12 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
         const formatedAadharNumber = formatAadharNumber(value as string);
         this.setState({ aadharNumber: formatedAadharNumber });
         break;
+      case "pin":
+        // if (isNaN(parseInt(value))) {
+        //   errors.pin = "PIN should only contain numbers";
+        // }
+        this.setState({ pin: value });
+        break;
       default:
         break;
     }
@@ -79,7 +85,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
       {
         errors,
         [name]: value,
-      } as Pick<RegisterState, keyof RegisterState>
+      } as unknown as Pick<RegisterState, keyof RegisterState>
     );
   };
   handleSelectChange = (event: SelectChangeEvent<string | number>) => {
@@ -99,6 +105,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
       birthMonth,
       birthYear,
       aadharNumber,
+      pin,
       errors,
     } = this.state;
 
@@ -110,6 +117,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
       !birthDay ||
       !birthMonth ||
       !birthYear ||
+      !pin ||
       !aadharNumber
     ) {
       return false;
@@ -142,6 +150,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
       birthMonth,
       birthYear,
       aadharNumber,
+      pin,
       errors,
     } = this.state;
     let valid = true;
@@ -181,7 +190,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
       birthDay &&
       birthMonth &&
       birthYear &&
-      aadharNumber
+      aadharNumber && pin
     ) {
       try {
         // Form is valid, proceed with submission
@@ -190,9 +199,12 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
           email,
           password: '', // This would need to be added to the form
           mobileNumber,
-          dateOfBirth: `${birthYear}-${birthMonth}-${birthDay}`,
+          dateOfBirth: `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`,
           aadharNumber: aadharNumber.replace(/\s/g, ""), // Remove spaces for submission
+          pin: parseInt(pin) || 0, // Convert string to number
         };
+        
+        console.log("Registration form data:", formData);
 
         console.log("Registration form submitted:", formData);
 
@@ -203,9 +215,10 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
         const response = await AuthService.register(formData);
 
         if (response.error) {
+          console.error("Registration error details:", response);
           alert(`Registration failed: ${response.error}`);
         } else {
-          alert("Registration successful! Please login with your credentials.");
+          console.log("Registration successful! Please login with your credentials.");
 
           // Navigate to login page after successful registration
           if (this.props.navigate) {
@@ -460,7 +473,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                 )}
               </Grid>
 
-              <Grid size={12}>
+              <Grid size={{xs: 12, md: 6}}>
                 <TextField
                   fullWidth
                   label={`${t('auth.aadharNumber')} (12 digits)`}
@@ -510,6 +523,11 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                   }}
                 />
               </Grid>
+              <Grid size={{xs: 12, md: 6}}>
+                <TextField fullWidth label={t('auth.pin')} name="pin" type="number" 
+                value={this.state.pin} 
+                inputProps={{min: 1000, max: 9999}} onChange={this.handleChange} required />
+              </Grid>
 
               <Grid size={12}>
                 <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
@@ -519,7 +537,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                     variant="contained"
                     color="primary"
                     size="large"
-                    disabled={!this.isFormValid()}
+                    // disabled={!this.isFormValid()}
                   >
                     {t('auth.register')}
                   </Button>

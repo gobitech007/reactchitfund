@@ -2,7 +2,6 @@
  * Authentication Service
  * Handles user authentication, registration, and session management
  */
-
 import ApiService from './api.service';
 
 // User interfaces
@@ -20,8 +19,8 @@ export interface User {
 // Login request payload
 export interface LoginRequest {
   email?: string;
-  mobileNumber?: string;
-  aadharNumber?: string;
+  phone?: string;
+  aadhar?: string;
   password?: string;
 }
 
@@ -40,6 +39,7 @@ export interface RegisterRequest {
   mobileNumber: string;
   dateOfBirth: string;
   aadharNumber: string;
+  pin: number;
 }
 
 // Password reset request
@@ -66,7 +66,7 @@ export const AuthService = {
    */
   login: async (credentials: LoginRequest) => {
     // Validate that at least one identifier is provided
-    if (!credentials.email && !credentials.mobileNumber && !credentials.aadharNumber) {
+    if (!credentials.email && !credentials.phone && !credentials.aadhar) {
       throw new Error('At least one of email, mobileNumber, or aadharNumber must be provided');
     }
 
@@ -78,7 +78,6 @@ export const AuthService = {
     if (response.data && response.data.access_token) {
       // Store auth token and user data in localStorage
       localStorage.setItem('authToken', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
 
       // Store refresh token if available
       if (response.data.refreshToken) {
@@ -95,7 +94,18 @@ export const AuthService = {
    * @returns Promise with registration response
    */
   register: async (userData: RegisterRequest) => {
-    return await ApiService.post<User>('/auth/register', userData);
+    const userDataFinal = {
+      fullname: userData.fullName,
+      email: userData.email,
+      phone: userData.mobileNumber,
+      aadhar: userData.aadharNumber,
+      dob: userData.dateOfBirth, // Should be in YYYY-MM-DD format
+      pin: userData.pin,
+      password: userData.password || "",
+      role: "customer"
+    };
+    console.log('Sending registration data:', JSON.stringify(userDataFinal));
+    return await ApiService.post<User>('/users/', userDataFinal);
   },
 
   /**
@@ -174,6 +184,16 @@ export const AuthService = {
    */
   verifyEmail: async (token: string) => {
     return await ApiService.post('/auth/verify-email', { token });
+  },
+
+  getCurrentUserData: async () => {
+    try {
+      const response = await ApiService.get('/auth/me');
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      throw error;
+    }
   }
 };
 

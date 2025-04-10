@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -25,6 +25,7 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CellGrid from '../components/CellGrid';
+import PaymentPanel, { PaymentData } from '../components/PaymentPanel';
 import { withNavigation } from '../utils/withNavigation';
 import { getCurrentWeekWithOrdinal, getCurrentMonthName } from '../utils/date-utils';
 import QRCodeComponent from '../components/QRCodeComponent';
@@ -69,6 +70,13 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     amount: 200,
     paymentMethod: 'credit_card',
   });
+
+  // State for available chit list
+  const [chitList, setChitList] = useState([
+    { id: 'chit1', name: 'Weekly Chit - ₹200' },
+    { id: 'chit2', name: 'Monthly Chit - ₹500' },
+    { id: 'chit3', name: 'Premium Chit - ₹1000' }
+  ]);
 
   // Maximum number of cells a user can select
   const MAX_SELECTIONS = 54;
@@ -142,7 +150,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   };
 
   // Handle payment submission
-  const handlePaymentSubmit = async () => {
+  const handleFinalPaymentSubmit = async () => {
     try {
       // Prepare payment request data
       const paymentRequest = {
@@ -230,64 +238,104 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const currentWeek = getCurrentWeekWithOrdinal();
   const currentMonth = getCurrentMonthName();
 
+  // Handle payment panel submission
+  const handlePayModal = (data: PaymentData) => {
+    console.log('Payment submitted:', data);
+    
+    // Update payment data
+    setPaymentData(prev => ({
+      ...prev,
+      amount: data.payAmount
+    }));
+    
+    // Open payment modal
+    setPaymentModalOpen(true);
+    
+    // Show notification
+    setNotification({
+      open: true,
+      message: `Payment of ₹${data.payAmount} initiated for ${data.chitId}`,
+      severity: 'info'
+    });
+  };
+  
+  // Handle payment panel cancel
+  const handlePaymentCancel = () => {
+    // Show notification
+    setNotification({
+      open: true,
+      message: 'Payment cancelled',
+      severity: 'info'
+    });
+  };
+
   return (
     <Container maxWidth="lg">
-      <Paper elevation={3} sx={{ p: 3, mt: 4, mb: 4 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Week Selection
-          </Typography>
-
-          <Chip
-            icon={<CalendarTodayIcon />}
-            label={`Week ${currentWeek} of ${currentMonth}`}
-            color="primary"
-            variant="outlined"
-            sx={{ mb: 2 }}
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mt: 4, mb: 4 }}>
+        {/* Left Panel - Payment Panel */}
+        <Box sx={{ width: { xs: '100%', md: '30%' } }}>
+          <PaymentPanel 
+            onPaymentSubmit={handlePayModal}
+            onCancel={handlePaymentCancel}
+            chitList={chitList}
           />
         </Box>
         
-        {/* <Typography variant="body1" paragraph align="center">
-          Select up to {MAX_SELECTIONS} cells from the grid below. 
-          Grayed-out cells are already taken.
-        </Typography> */}
+        {/* Right Panel - Week Selection */}
+        <Box sx={{ width: { xs: '100%', md: '70%' } }}>
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h4" component="h1" gutterBottom align="center">
+                Week Selection
+              </Typography>
 
-        {selectedCells.length > 0 && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            You have selected {selectedCells.length} week(s): {selectedCells.join(', ')}
-          </Alert>
-        )}
+              <Chip
+                icon={<CalendarTodayIcon />}
+                label={`Week ${currentWeek} of ${currentMonth}`}
+                color="primary"
+                variant="outlined"
+                sx={{ mb: 2 }}
+              />
+            </Box>
+            
+            {selectedCells.length > 0 && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                You have selected {selectedCells.length} week(s): {selectedCells.join(', ')}
+              </Alert>
+            )}
 
-        <CellGrid 
-          onCellClick={handleCellClick}
-          disabledCells={disabledCells}
-          selectedCells={selectedCells}
-          title=""
-        />
+            <CellGrid 
+              onCellClick={handleCellClick}
+              disabledCells={disabledCells}
+              selectedCells={selectedCells}
+              title=""
+            />
 
-        <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3 }} />
 
-        <Stack direction="row" spacing={2} justifyContent="center">
-          <Button 
-            variant="contained" 
-            color="primary"
-            size="large"
-            onClick={handleConfirmSelection}
-            disabled={selectedCells.length === 0}
-          >
-            Confirm Selection
-          </Button>
-          <Button 
-            variant="outlined" 
-            color="secondary"
-            size="large"
-            onClick={handleClearSelection}
-            disabled={selectedCells.length === 0}
-          >
-            Clear Selection
-          </Button>
-        </Stack>
-      </Paper>
+            <Stack direction="row" spacing={2} justifyContent="center">
+              <Button 
+                variant="contained" 
+                color="primary"
+                size="large"
+                onClick={handleConfirmSelection}
+                disabled={selectedCells.length === 0}
+              >
+                Confirm Selection
+              </Button>
+              <Button 
+                variant="outlined" 
+                color="secondary"
+                size="large"
+                onClick={handleClearSelection}
+                disabled={selectedCells.length === 0}
+              >
+                Clear Selection
+              </Button>
+            </Stack>
+          </Paper>
+        </Box>
+      </Box>
 
       <Snackbar
         open={notification.open}
@@ -554,9 +602,9 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
                 fullWidth
                 variant="contained"
                 color="primary"
-                onClick={handlePaymentSubmit}
+                onClick={handleFinalPaymentSubmit}
               >
-                Pay Now
+                Pay
               </Button>
               <Button
                 fullWidth
