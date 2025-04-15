@@ -23,12 +23,15 @@ import {
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import { DataProvider } from '../context/applicationData';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CellGrid from '../components/CellGrid';
 import PaymentPanel, { PaymentData } from '../components/PaymentPanel';
 import { withNavigation } from '../utils/withNavigation';
 import { getCurrentWeekWithOrdinal, getCurrentMonthName } from '../utils/date-utils';
 import QRCodeComponent from '../components/QRCodeComponent';
+import { useAuth, useData, useDynamicApiStore } from '../context';
+import {PaymentService} from '../services';
 
 interface CellSelectionProps {
   navigate?: (path: string) => void;
@@ -49,6 +52,8 @@ interface PaymentFormData {
 }
 
 const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
+  
+    const { isAuthenticated, currentUser } = useAuth();
   // State for selected cells
   const [selectedCells, setSelectedCells] = useState<number[]>([]);
 
@@ -72,6 +77,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   });
 
   // State for available chit list
+  console.log(currentUser, 'currentUser')
+  useDynamicApiStore('chitUsers', { 
+    params: currentUser?.user_id ? [currentUser.user_id] : [] 
+  });
+  const { store } = useData();
+  console.log(store, 'getChitUsers');
   const [chitList, setChitList] = useState([
     { id: 'chit1', name: 'Weekly Chit - ₹200' },
     { id: 'chit2', name: 'Monthly Chit - ₹500' },
@@ -184,7 +195,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       }
 
       // Import PaymentService dynamically to avoid circular dependencies
-      const { PaymentService } = await import('../services');
+      // const { PaymentService } = await import('../services');
 
       // Process payment
       const response = await PaymentService.processPayment(paymentRequest);
@@ -270,6 +281,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   };
 
   return (
+    <DataProvider>
     <Container maxWidth="lg">
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mt: 4, mb: 4 }}>
         {/* Left Panel - Payment Panel */}
@@ -618,6 +630,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         </Paper>
       </Modal>
     </Container>
+    </DataProvider>
   );
 };
 

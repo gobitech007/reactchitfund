@@ -19,11 +19,21 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is already logged in (from localStorage)
   useEffect(() => {
-    const user = AuthService.getCurrentUser();
-    if (user) {
-      setCurrentUser(user);
+    const fetchData = async () => {
+      setLoading(true);
+      const user = await AuthService.getCurrentUserData();
+      if (user) {
+        setCurrentUser(user);
+      }
+      setLoading(false);
     }
-    setLoading(false);
+    fetchData();
+    // const user = AuthService.getCurrentUserData();
+    // console.log('user', user);
+    // if (user) {
+    //   setCurrentUser(user);
+    // }
+    // setLoading(false);
   }, []);
 
   // Login function

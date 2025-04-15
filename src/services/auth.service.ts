@@ -78,6 +78,7 @@ export const AuthService = {
     if (response.data && response.data.access_token) {
       // Store auth token and user data in localStorage
       localStorage.setItem('authToken', response.data.access_token);
+      // AuthService.getCurrentUserData();
 
       // Store refresh token if available
       if (response.data.refreshToken) {
