@@ -23,7 +23,7 @@ import {
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import { DataProvider } from '../context/applicationData';
+// import { DataProvider } from '../context';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CellGrid from '../components/CellGrid';
 import PaymentPanel, { PaymentData } from '../components/PaymentPanel';
@@ -31,7 +31,7 @@ import { withNavigation } from '../utils/withNavigation';
 import { getCurrentWeekWithOrdinal, getCurrentMonthName } from '../utils/date-utils';
 import QRCodeComponent from '../components/QRCodeComponent';
 import { useAuth, useData, useDynamicApiStore } from '../context';
-import {PaymentService} from '../services';
+import {PaymentService, ApiService} from '../services';
 
 interface CellSelectionProps {
   navigate?: (path: string) => void;
@@ -53,7 +53,8 @@ interface PaymentFormData {
 
 const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   
-    const { isAuthenticated, currentUser } = useAuth();
+    const { currentUser } = useAuth();
+    // const { store } = useData();
   // State for selected cells
   const [selectedCells, setSelectedCells] = useState<number[]>([]);
 
@@ -77,17 +78,63 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   });
 
   // State for available chit list
-  console.log(currentUser, 'currentUser')
-  useDynamicApiStore('chitUsers', { 
+  
+  // Get chit users data from the store
+  const chitUsersData = useDynamicApiStore('chitUsers', { 
     params: currentUser?.user_id ? [currentUser.user_id] : [] 
   });
+  
+  // Access the full store for debugging and get loading/error states
   const { store } = useData();
-  console.log(store, 'getChitUsers');
-  const [chitList, setChitList] = useState([
-    { id: 'chit1', name: 'Weekly Chit - ₹200' },
-    { id: 'chit2', name: 'Monthly Chit - ₹500' },
-    { id: 'chit3', name: 'Premium Chit - ₹1000' }
-  ]);
+  // Use type assertion to access dynamic properties
+  const isLoading = store['chitUsersLoading'] as boolean;
+  const error = store['chitUsersError'] as string | null;
+  const [chitList, setChitList] = useState<ChitListItem[]>([]);
+  
+  
+  // Log the store and chitUsersData for debugging
+  useEffect(() => {
+    setChitList(chitUsersData);
+    store.chitUsersLoading = false;
+  }, [store, chitUsersData, isLoading, error]);
+  
+  // Define the chit list item type
+  interface ChitListItem {
+    chit_no: string;
+    name: string;
+    amount: string | number;
+  }
+  
+  // Initialize with default values, then update when API data is available
+  // const [chitList, setChitList] = useState<ChitListItem[]>([
+  //   { id: 'chit1', name: 'Weekly Chit - ₹200' },
+  //   { id: 'chit2', name: 'Monthly Chit - ₹500' },
+  //   { id: 'chit3', name: 'Premium Chit - ₹1000' }
+  // ]);
+  
+  // Update chitList when API data is available
+  useEffect(() => {
+    if (chitUsersData && Array.isArray(chitUsersData)) {
+      // Type assertion for the API data
+      const typedChitData = chitUsersData as Array<{
+        chit_no?: string;
+        chit_id?: string;
+        name?: string;
+        type?: string;
+        amount?: number | string;
+      }>;
+      
+      const formattedChitList: ChitListItem[] = typedChitData.map(chit => ({
+        chit_no: chit.chit_no || chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
+        name: `Weekly Chit ${chit.chit_no}- ₹${chit.amount || '200'}`,
+        amount: `${chit.amount || '200'}`,
+      }));
+      
+      if (formattedChitList.length > 0) {
+        setChitList(formattedChitList);
+      }
+    }
+  }, [chitUsersData]);
 
   // Maximum number of cells a user can select
   const MAX_SELECTIONS = 54;
@@ -163,42 +210,75 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   // Handle payment submission
   const handleFinalPaymentSubmit = async () => {
     try {
-      // Prepare payment request data
-      const paymentRequest = {
-        amount: paymentData.amount,
-        paymentMethod: paymentData.paymentMethod,
-        description: `Payment for ${selectedCells.length} week(s)`,
-        selectedWeeks: selectedCells,
-        cardDetails: {
-          cardNumber: '',
-          cardName: '',
-          expiryDate: '',
-          cvv: ''
-        },
-        upiDetails: {
-          upiId: ''
-        }
+      // Get the first chit from the list (assuming we're paying for the selected chit)
+      const selectedChit = chitList.length > 0 ? chitList[0] : null;
+      
+      if (!selectedChit || !currentUser) {
+        setNotification({
+          open: true,
+          message: 'Missing chit or user information',
+          severity: 'error'
+        });
+        return;
+      }
+      
+      // Generate a random transaction ID
+      const generateTransactionId = () => {
+        const timestamp = Date.now();
+        const randomNum = Math.floor(Math.random() * 9000) + 1000; // 4-digit random number
+        return `TXN${timestamp}${randomNum}`;
       };
 
-      // Add payment method specific details
-      if (paymentData.paymentMethod === 'credit_card' || paymentData.paymentMethod === 'debit_card') {
-        paymentRequest.cardDetails = {
-          cardNumber: paymentData.cardNumber || '',
-          cardName: paymentData.cardName || '',
-          expiryDate: paymentData.expiryDate || '',
-          cvv: paymentData.cvv || ''
+      // Generate a single transaction ID for all payments
+      const transactionId = generateTransactionId();
+      
+      // If no weeks are selected, default to the first week
+      const weeksToProcess = selectedCells.length > 0 ? selectedCells : [1];
+      
+      // Calculate amount per week
+      const amountPerWeek = Math.floor(paymentData.amount / weeksToProcess.length);
+      
+      // Process payments for all selected weeks
+      const paymentPromises = weeksToProcess.map(async (week) => {
+        // Prepare backend payment request data for this week
+        const backendPayload = {
+          user_id: currentUser.user_id,
+          chit_no: parseInt(selectedChit.chit_no),
+          amount: amountPerWeek, // Divide amount among weeks
+          week_no: week,
+          pay_type: paymentData.paymentMethod === 'credit_card' || paymentData.paymentMethod === 'debit_card' 
+            ? 'card' 
+            : paymentData.paymentMethod === 'upi' ? 'UPI' : 'netbanking',
+          pay_card: paymentData.paymentMethod === 'credit_card' ? 'credit' : 
+                   paymentData.paymentMethod === 'debit_card' ? 'debit' : null,
+          pay_card_name: paymentData.cardName || null,
+          pay_expiry_no: paymentData.expiryDate || null,
+          pay_qr: paymentData.upiId || null,
+          transaction_id: `${transactionId}-W${week}` // Add transaction ID with week suffix
         };
-      } else if (paymentData.paymentMethod === 'upi') {
-        paymentRequest.upiDetails = {
-          upiId: paymentData.upiId || ''
-        };
+        
+        // Process payment for this week
+        return await PaymentService.processPayment(backendPayload as any);
+      });
+      
+      // Wait for all payment requests to complete
+      const responses = await Promise.all(paymentPromises);
+      
+      // Check if any payment failed
+      const failedPayments = responses.filter(response => response.error);
+      
+      // If any payment failed, show error
+      if (failedPayments.length > 0) {
+        setNotification({
+          open: true,
+          message: `Some payments failed: ${failedPayments.map(r => r.error).join(', ')}`,
+          severity: 'error'
+        });
+        return;
       }
-
-      // Import PaymentService dynamically to avoid circular dependencies
-      // const { PaymentService } = await import('../services');
-
-      // Process payment
-      const response = await PaymentService.processPayment(paymentRequest);
+      
+      // All payments succeeded
+      const response = responses[0]; // Use the first response for notification
 
       if (response.error) {
         // Show error notification
@@ -213,12 +293,24 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // Close the modal
       setPaymentModalOpen(false);
 
-      // Show success notification
+      // Show success notification with transaction ID
       setNotification({
         open: true,
-        message: `Successfully processed payment of ₹${paymentData.amount} for weeks: ${selectedCells.join(', ')}`,
+        message: `Successfully processed payment of ₹${paymentData.amount} for weeks: ${weeksToProcess.join(', ')}. Transaction ID: ${transactionId}`,
         severity: 'success'
       });
+      
+      // Optionally fetch all payments for this transaction ID to confirm they were processed
+      try {
+        // Use ApiService directly to avoid TypeScript errors if the method isn't recognized
+        const allPaymentsResponse = await ApiService.get(`/payments/transaction/${transactionId.split('-')[0]}`);
+        
+        if (allPaymentsResponse.data && allPaymentsResponse.data.length > 0) {
+          console.log('All payments for this transaction:', allPaymentsResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching all payments for transaction:', error);
+      }
 
       // Clear selected cells after successful payment
       setSelectedCells([]);
@@ -250,9 +342,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const currentMonth = getCurrentMonthName();
 
   // Handle payment panel submission
-  const handlePayModal = (data: PaymentData) => {
-    console.log('Payment submitted:', data);
-    
+  const handlePayModal = (data: PaymentData) => {    
     // Update payment data
     setPaymentData(prev => ({
       ...prev,
@@ -279,18 +369,61 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       severity: 'info'
     });
   };
+  
+  // Handle payment panel value changes
+  const handlePaymentValuesChange = (values: {
+    chitId: string;
+    baseAmount: number;
+    payAmount: number;
+    weekSelection: number;
+  }) => {    
+    // Update selected cells based on weekSelection
+    // This is just an example - you might want to implement your own logic
+    const newSelectedCells: number[] = [];
+    for (let i = 1; i <= values.weekSelection; i++) {
+      newSelectedCells.push(i);
+    }
+    setSelectedCells(newSelectedCells);
+    
+    // Update payment data
+    setPaymentData(prev => ({
+      ...prev,
+      amount: values.payAmount
+    }));
+  };
 
   return (
-    <DataProvider>
+    // <DataProvider>
     <Container maxWidth="lg">
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mt: 4, mb: 4 }}>
         {/* Left Panel - Payment Panel */}
         <Box sx={{ width: { xs: '100%', md: '30%' } }}>
-          <PaymentPanel 
-            onPaymentSubmit={handlePayModal}
-            onCancel={handlePaymentCancel}
-            chitList={chitList}
-          />
+          {isLoading ? (
+            <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
+              <Typography variant="body1">Loading chit data...</Typography>
+            </Paper>
+          ) : error ? (
+            <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
+              <Typography variant="body1" color="error">
+                Error loading chit data: {error}
+              </Typography>
+              <Button 
+                variant="outlined" 
+                color="primary" 
+                sx={{ mt: 2 }}
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </Paper>
+          ) : (
+            <PaymentPanel 
+              onPaymentSubmit={handlePayModal}
+              onCancel={handlePaymentCancel}
+              chitList={chitList}
+              onChangeValues={handlePaymentValuesChange}
+            />
+          )}
         </Box>
         
         {/* Right Panel - Week Selection */}
@@ -317,7 +450,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
             )}
 
             <CellGrid 
-              onCellClick={handleCellClick}
+              // onCellClick={handleCellClick}
               disabledCells={disabledCells}
               selectedCells={selectedCells}
               title=""
@@ -325,7 +458,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
 
             <Divider sx={{ my: 3 }} />
 
-            <Stack direction="row" spacing={2} justifyContent="center">
+            {/* <Stack direction="row" spacing={2} justifyContent="center">
               <Button 
                 variant="contained" 
                 color="primary"
@@ -344,7 +477,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               >
                 Clear Selection
               </Button>
-            </Stack>
+            </Stack> */}
           </Paper>
         </Box>
       </Box>
@@ -630,7 +763,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         </Paper>
       </Modal>
     </Container>
-    </DataProvider>
+    // </DataProvider>
   );
 };
 

@@ -28,12 +28,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
     fetchData();
-    // const user = AuthService.getCurrentUserData();
-    // console.log('user', user);
-    // if (user) {
-    //   setCurrentUser(user);
-    // }
-    // setLoading(false);
   }, []);
 
   // Login function

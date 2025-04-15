@@ -40,7 +40,7 @@ const CellGrid: React.FC<CellGridProps> = ({
   onCellClick, 
   disabledCells = [], 
   selectedCells = [],
-  title = "Select a Cell"
+  title = "Select a week"
 }) => {
   const theme = useTheme();
   const [hoveredCell, setHoveredCell] = useState<number | null>(null);
@@ -68,7 +68,7 @@ const CellGrid: React.FC<CellGridProps> = ({
           return (
             <Grid item xs={6} sm={4} md={3} lg={2} key={cellNumber}>
               <Tooltip 
-                title={isDisabled ? "This cell is not available" : `Cell ${cellNumber}`}
+                title={isDisabled ? "This week is not available" : `Week ${cellNumber}`}
                 arrow
               >
                 <Box>

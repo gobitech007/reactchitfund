@@ -19,42 +19,84 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import CancelIcon from '@mui/icons-material/Cancel';
 
 interface ChitItem {
-  id: string;
-  name: string;
+  chit_no: string;
+  amount: string | number;
   description?: string;
+  name?: string;
 }
 
 interface PaymentPanelProps {
   onPaymentSubmit: (paymentData: PaymentData) => void;
   onCancel: () => void;
   chitList?: ChitItem[];
+  onChangeValues?: (values: {
+    chitId: string;
+    baseAmount: number;
+    payAmount: number;
+    weekSelection: number;
+  }) => void;
 }
 
 export interface PaymentData {
   chitId: string;
   baseAmount: number;
   payAmount: number;
+  weekSelection: number;
 }
 
 const PaymentPanel: React.FC<PaymentPanelProps> = ({ 
   onPaymentSubmit, 
   onCancel,
-  chitList = [] // Default to empty array if not provided
+  chitList = [], // Default to empty array if not provided
+  onChangeValues
 }) => {
   // State for form fields
   const [selectedChit, setSelectedChit] = useState<string>('');
   const [baseAmount, setBaseAmount] = useState<number>(200);
   const [payAmount, setPayAmount] = useState<number>(200);
+  const [weekSelection, setWeekSelection] = useState<number>(1); // Default to 1 week
   const [error, setError] = useState<string | null>(null);
   
+  // Function to notify parent component of changes
+  const notifyChanges = (updates: Partial<{
+    chitId: string;
+    baseAmount: number;
+    payAmount: number;
+    weekSelection: number;
+  }>) => {
+    if (onChangeValues) {
+      onChangeValues({
+        chitId: updates.chitId !== undefined ? updates.chitId : selectedChit,
+        baseAmount: updates.baseAmount !== undefined ? updates.baseAmount : baseAmount,
+        payAmount: updates.payAmount !== undefined ? updates.payAmount : payAmount,
+        weekSelection: updates.weekSelection !== undefined ? updates.weekSelection : weekSelection
+      });
+    }
+  };
+  
   // Update pay amount when base amount changes
+  // Auto-select the chit if there's only one in the list
   useEffect(() => {
     setPayAmount(baseAmount);
-  }, [baseAmount]);
+    setWeekSelection(1); // Reset to 1 week when base amount changes
+    
+    // Notify parent of changes
+    const updates: any = { payAmount: baseAmount, weekSelection: 1 };
+    
+    if (chitList.length === 1) {
+      const chitId = chitList[0].chit_no;
+      setSelectedChit(chitId);
+      updates.chitId = chitId;
+    }
+    
+    notifyChanges(updates);
+  }, [baseAmount, chitList]);
 
   // Handle chit selection change
   const handleChitChange = (event: SelectChangeEvent) => {
-    setSelectedChit(event.target.value);
+    const newChitId = event.target.value;
+    setSelectedChit(newChitId);
+    notifyChanges({ chitId: newChitId });
   };
 
   // Handle base amount change with validation
@@ -62,27 +104,41 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     const value = parseInt(event.target.value, 10);
     
     // If empty or not a number, set to minimum
-    if (isNaN(value)) {
+    if (isNaN(value) && value < 0) {
       setBaseAmount(200);
+      notifyChanges({ baseAmount: 200 });
       return;
     }
     
     // Validate for minimum amount
-    if (value < 200) {
-      setBaseAmount(200);
+    if (value < 200 && value >= 0) {
+      setBaseAmount(value);
       setError('Base amount must be at least ₹200');
+      notifyChanges({ baseAmount: value });
       return;
     }
     
     // Validate for hundreds (200, 300, 400, etc.)
-    if (value % 100 !== 0) {
-      setBaseAmount(Math.floor(value / 100) * 100);
+    if (value % 100 !== 0 && value >= 200) {
+      const roundedValue = Math.floor(value / 100) * 100;
+      setBaseAmount(roundedValue);
       setError('Base amount must be in hundreds (200, 300, 400, etc.)');
+      notifyChanges({ baseAmount: roundedValue });
       return;
     }
     
     // Valid amount
     setBaseAmount(value);
+    // If there's at least one chit in the list, update it
+    if (chitList.length > 0) {
+      chitList[0].amount = value.toString();
+      chitList[0].name = chitList[0].name?.split('₹')[0] + '₹' + value.toString();
+      const newChitId = chitList[0].chit_no;
+      setSelectedChit(newChitId); // Set to chit_no which is the correct identifier
+      notifyChanges({ baseAmount: value, chitId: newChitId });
+    } else {
+      notifyChanges({ baseAmount: value });
+    }
     setError(null);
   };
 
@@ -91,20 +147,36 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     const value = parseInt(event.target.value, 10);
     
     // If empty or not a number, set to base amount
-    if (isNaN(value)) {
+    if (isNaN(value) && value < 0) {
       setPayAmount(baseAmount);
+      notifyChanges({ payAmount: baseAmount });
       return;
     }
     
     // Validate for minimum amount (base amount)
     if (value < baseAmount) {
-      setPayAmount(baseAmount);
+      setPayAmount(value);
       setError(`Pay amount must be at least ₹${baseAmount}`);
+      notifyChanges({ payAmount: value });
+      return;
+    }
+    
+    // Validate that pay amount is a multiple of base amount
+    if (value % baseAmount !== 0) {
+      setPayAmount(value);
+      setError(`Pay amount must be in multiples of ₹${baseAmount}`);
+      notifyChanges({ payAmount: value });
       return;
     }
     
     // Valid amount
     setPayAmount(value);
+    const newWeekSelection = value / baseAmount;
+    setWeekSelection(newWeekSelection);
+    notifyChanges({ 
+      payAmount: value,
+      weekSelection: newWeekSelection
+    });
     setError(null);
   };
 
@@ -126,11 +198,15 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       return;
     }
     
+    // Calculate weekSelection if not already set
+    const weeks = weekSelection || (payAmount / baseAmount);
+    
     // Submit payment data
     onPaymentSubmit({
       chitId: selectedChit,
       baseAmount,
-      payAmount
+      payAmount,
+      weekSelection: weeks
     });
   };
 
@@ -157,6 +233,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             label="Select Chit"
             onChange={handleChitChange}
             required
+            disabled={chitList.length === 1}
           >
             {chitList.length === 0 ? (
               <MenuItem value="" disabled>
@@ -164,8 +241,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
               </MenuItem>
             ) : (
               chitList.map((chit) => (
-                <MenuItem key={chit.id} value={chit.id}>
-                  {chit.name}
+                <MenuItem key={chit.chit_no} value={chit.chit_no}>
+                  {chit.name || `Chit ${chit.chit_no} - ₹${chit.amount}`}
                 </MenuItem>
               ))
             )}
@@ -215,6 +292,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             color="primary"
             startIcon={<PaymentIcon />}
             onClick={handleSubmit}
+            disabled={error !== null}
           >
             Pay Now
           </Button>

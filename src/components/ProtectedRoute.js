@@ -20,7 +20,6 @@ const ProtectedRoute = () => {
 
   // If the user is not authenticated, redirect to the login page
   if (!isAuthenticated() || !currentUser) {
-    console.log('User not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 

@@ -3,7 +3,7 @@
  * Handles payment processing and transaction management
  */
 
-import ApiService from './api.service';
+import ApiService, { ApiResponse } from './api.service';
 
 // Payment method types
 export type PaymentMethod = 'credit_card' | 'debit_card' | 'upi' | 'net_banking' | 'wallet';
@@ -44,7 +44,7 @@ export interface Transaction {
   status: PaymentStatus;
   description?: string;
   selectedWeeks?: number[];
-  transactionId?: string;
+  transaction_id: string; // Required transaction ID
   createdAt: string;
   updatedAt: string;
 }
@@ -63,17 +63,39 @@ export interface SavedPaymentMethod {
 }
 
 /**
+ * Payment Service interface
+ * Defines the shape of the PaymentService object
+ */
+export interface IPaymentService {
+  processPayment: (paymentData: PaymentRequest | any) => Promise<ApiResponse<Transaction>>;
+  getTransactionHistory: (page?: number, limit?: number) => Promise<ApiResponse<{ transactions: Transaction[], total: number }>>;
+  getTransactionById: (transactionId: string) => Promise<ApiResponse<Transaction>>;
+  getPaymentsByTransactionId: (transactionId: string) => Promise<ApiResponse<Transaction[]>>;
+  getSavedPaymentMethods: () => Promise<ApiResponse<SavedPaymentMethod[]>>;
+  savePaymentMethod: (paymentMethod: Partial<SavedPaymentMethod>) => Promise<ApiResponse<SavedPaymentMethod>>;
+  deletePaymentMethod: (paymentMethodId: string) => Promise<ApiResponse<any>>;
+  setDefaultPaymentMethod: (paymentMethodId: string) => Promise<ApiResponse<any>>;
+  generateReceipt: (transactionId: string) => Promise<ApiResponse<any>>;
+  requestRefund: (transactionId: string, reason: string) => Promise<ApiResponse<any>>;
+  checkPaymentStatus: (transactionId: string) => Promise<ApiResponse<{ status: PaymentStatus }>>;
+  getAvailablePaymentMethods: () => Promise<ApiResponse<{ methods: PaymentMethod[] }>>;
+  validateCardDetails: (cardDetails: CardDetails) => { isValid: boolean; errors: Record<string, string> };
+  validateUpiId: (upiId: string) => { isValid: boolean; error?: string };
+  getChitUsers: (user_id: string) => Promise<ApiResponse<{ status: PaymentStatus }>>;
+}
+
+/**
  * Payment Service
  * Provides methods for payment processing and transaction management
  */
-export const PaymentService = {
+export const PaymentService: IPaymentService = {
   /**
    * Process a payment
-   * @param paymentData - Payment request data
+   * @param paymentData - Payment request data (can be either PaymentRequest or backend format)
    * @returns Promise with payment response
    */
-  processPayment: async (paymentData: PaymentRequest) => {
-    return await ApiService.post<Transaction>('/payments/process', paymentData);
+  processPayment: async (paymentData: PaymentRequest | any) => {
+    return await ApiService.post<Transaction>('/payments/process/', paymentData);
   },
 
   /**
@@ -96,6 +118,15 @@ export const PaymentService = {
    */
   getTransactionById: async (transactionId: string) => {
     return await ApiService.get<Transaction>(`/payments/transactions/${transactionId}`);
+  },
+  
+  /**
+   * Get payments by transaction ID
+   * @param transactionId - Transaction ID
+   * @returns Promise with payments for the transaction
+   */
+  getPaymentsByTransactionId: async (transactionId: string) => {
+    return await ApiService.get<Transaction[]>(`/payments/transaction/${transactionId}`);
   },
 
   /**
@@ -236,6 +267,9 @@ export const PaymentService = {
 
   /**Chit user Details */
   getChitUsers: async (user_id: string) => {
+    if (!user_id) {
+      throw new Error('User ID is required');
+    }
     return await ApiService.get<{ status: PaymentStatus }>(`/payments/chits/user/${user_id}`);
   },
 

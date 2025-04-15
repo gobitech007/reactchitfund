@@ -12,6 +12,7 @@ import Login from './pages/login';
 import Register from './pages/register';
 import ForgotPassword from './pages/forgot-password';
 import { AuthProvider } from './context/AuthContext';
+import { DataProvider } from './context/applicationData.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import { performCorsCheck } from './utils/cors-check';
 
@@ -31,30 +32,18 @@ function App() {
 
   return (
     <AuthProvider>
-      <div className="App">
-        <Header />
-        <main>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+      <DataProvider>
+        <div className="App">
+          <Header />
+          <main>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            {/* Map other public routes */}
-            {publicRoutes.map((route) => (
-              route.route && (
-                <Route
-                  exact
-                  path={route.route}
-                  element={route.element}
-                  key={route.key}
-                />
-              )
-            ))}
-
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              {authRoutes.map((route) => (
+              {/* Map other public routes */}
+              {publicRoutes.map((route) => (
                 route.route && (
                   <Route
                     exact
@@ -64,16 +53,30 @@ function App() {
                   />
                 )
               ))}
-            </Route>
 
-            {/* Default route */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+              {/* Protected routes */}
+              <Route element={<ProtectedRoute />}>
+                {authRoutes.map((route) => (
+                  route.route && (
+                    <Route
+                      exact
+                      path={route.route}
+                      element={route.element}
+                      key={route.key}
+                    />
+                  )
+                ))}
+              </Route>
 
-            {/* Catch all route - redirect to login */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </main>
-      </div>
+              {/* Default route */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+
+              {/* Catch all route - redirect to login */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </DataProvider>
     </AuthProvider>
   );
 }
