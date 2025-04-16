@@ -25,7 +25,7 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 // import { DataProvider } from '../context';
 import PaymentIcon from '@mui/icons-material/Payment';
-import CellGrid from '../components/CellGrid';
+import CellGrid, { CellData } from '../components/CellGrid';
 import PaymentPanel, { PaymentData } from '../components/PaymentPanel';
 import { withNavigation } from '../utils/withNavigation';
 import { getCurrentWeekWithOrdinal, getCurrentMonthName } from '../utils/date-utils';
@@ -59,7 +59,10 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const [selectedCells, setSelectedCells] = useState<number[]>([]);
 
   // State for disabled cells (example: already taken by others)
-  const [disabledCells] = useState<number[]>([]);
+  const [disabledCells, setDisabledCells] = useState<number[]>([]);
+  
+  // State for paid cells
+  const [paidCells, setPaidCells] = useState<CellData[]>([]);
 
   // State for notification
   const [notification, setNotification] = useState({
@@ -96,24 +99,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   useEffect(() => {
     setChitList(chitUsersData);
     store.chitUsersLoading = false;
-  }, [store, chitUsersData, isLoading, error]);
-  
-  // Define the chit list item type
-  interface ChitListItem {
-    chit_no: string;
-    name: string;
-    amount: string | number;
-  }
-  
-  // Initialize with default values, then update when API data is available
-  // const [chitList, setChitList] = useState<ChitListItem[]>([
-  //   { id: 'chit1', name: 'Weekly Chit - ₹200' },
-  //   { id: 'chit2', name: 'Monthly Chit - ₹500' },
-  //   { id: 'chit3', name: 'Premium Chit - ₹1000' }
-  // ]);
-  
-  // Update chitList when API data is available
-  useEffect(() => {
+    // Update chitList when API data is available
     if (chitUsersData && Array.isArray(chitUsersData)) {
       // Type assertion for the API data
       const typedChitData = chitUsersData as Array<{
@@ -128,13 +114,33 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         chit_no: chit.chit_no || chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
         name: `Weekly Chit ${chit.chit_no}- ₹${chit.amount || '200'}`,
         amount: `${chit.amount || '200'}`,
+        chit_id: chit.chit_id,
       }));
       
       if (formattedChitList.length > 0) {
         setChitList(formattedChitList);
+        
+        // If there's only one chit, fetch its payment details automatically
+        if (formattedChitList.length === 1 && formattedChitList[0].chit_id) {
+          fetchChitPaymentDetails(formattedChitList[0].chit_id);
+        }
       }
     }
-  }, [chitUsersData]);
+  }, [store, chitUsersData, isLoading, error]);
+  
+  // Define the chit list item type
+  interface ChitListItem {
+    chit_id?: string;
+    chit_no: string;
+    name: string;
+    amount: string | number;
+  }
+
+  const handleDisableBaseAmount = () => {
+    // Implement logic here to disable the base amount for a given week
+    const paidYcells = paidCells.filter(cell => cell.is_paid === 'Y');
+    return paidYcells.length > 0;
+  }
 
   // Maximum number of cells a user can select
   const MAX_SELECTIONS = 54;
@@ -314,6 +320,11 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
 
       // Clear selected cells after successful payment
       setSelectedCells([]);
+      
+      // Refresh payment details to update the UI with newly paid weeks
+      if (selectedChit && selectedChit.chit_no) {
+        fetchChitPaymentDetails(selectedChit.chit_no);
+      }
 
       // In a real app, you might navigate to another page after successful payment
       // if (navigate) navigate('/dashboard');
@@ -370,18 +381,58 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     });
   };
   
+  // Fetch payment details for a specific chit
+  const fetchChitPaymentDetails = async (chitId: string) => {
+    if (!chitId) return;
+    
+    try {
+      const response = await PaymentService.getChitPaymentDetails(chitId);
+      
+      if (response.data) {
+        // Set paid cells from the response
+        setPaidCells(response.data);
+        
+        // Update disabled cells to include paid cells
+        const newDisabledCells = response.data
+          .filter(cell => cell.is_paid === 'Y')
+          .map(cell => cell.week );
+        
+        setDisabledCells(newDisabledCells);
+      }
+    } catch (error) {
+      console.error('Error fetching chit payment details:', error);
+      setNotification({
+        open: true,
+        message: `Failed to load payment details: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        severity: 'error'
+      });
+    }
+  };
+
   // Handle payment panel value changes
   const handlePaymentValuesChange = (values: {
     chitId: string;
     baseAmount: number;
     payAmount: number;
     weekSelection: number;
-  }) => {    
+  }) => {   
+    if (values.baseAmount?.toString().length < 2) {
+      return; 
+    } 
+    // Fetch payment details when chit ID changes
+    if (values.chitId && values.baseAmount.toString().length >= 2) {
+      fetchChitPaymentDetails(values.chitId);
+    }
+    
     // Update selected cells based on weekSelection
     // This is just an example - you might want to implement your own logic
     const newSelectedCells: number[] = [];
     for (let i = 1; i <= values.weekSelection; i++) {
-      newSelectedCells.push(i);
+      // Only add to selected cells if not already paid
+      const isPaid = paidCells.some(cell => cell.week === i && cell.is_paid === 'Y');
+      if (!isPaid) {
+        newSelectedCells.push(i);
+      }
     }
     setSelectedCells(newSelectedCells);
     
@@ -393,7 +444,6 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   };
 
   return (
-    // <DataProvider>
     <Container maxWidth="lg">
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mt: 4, mb: 4 }}>
         {/* Left Panel - Payment Panel */}
@@ -422,6 +472,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               onCancel={handlePaymentCancel}
               chitList={chitList}
               onChangeValues={handlePaymentValuesChange}
+              alreadyBaseAmount={handleDisableBaseAmount}
             />
           )}
         </Box>
@@ -450,9 +501,10 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
             )}
 
             <CellGrid 
-              // onCellClick={handleCellClick}
+              onCellClick={handleCellClick}
               disabledCells={disabledCells}
               selectedCells={selectedCells}
+              paidCells={paidCells}
               title=""
             />
 
@@ -763,7 +815,6 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         </Paper>
       </Modal>
     </Container>
-    // </DataProvider>
   );
 };
 

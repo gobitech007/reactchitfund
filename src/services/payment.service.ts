@@ -82,6 +82,7 @@ export interface IPaymentService {
   validateCardDetails: (cardDetails: CardDetails) => { isValid: boolean; errors: Record<string, string> };
   validateUpiId: (upiId: string) => { isValid: boolean; error?: string };
   getChitUsers: (user_id: string) => Promise<ApiResponse<{ status: PaymentStatus }>>;
+  getChitPaymentDetails: (chit_id: string) => Promise<ApiResponse<{ week: number; is_paid: 'Y' | 'N' }[]>>;
 }
 
 /**
@@ -271,6 +272,14 @@ export const PaymentService: IPaymentService = {
       throw new Error('User ID is required');
     }
     return await ApiService.get<{ status: PaymentStatus }>(`/payments/chits/user/${user_id}`);
+  },
+  
+  /**Get chit payment details by chit_id */
+  getChitPaymentDetails: async (chit_id: string) => {
+    if (!chit_id) {
+      throw new Error('Chit ID is required');
+    }
+    return await ApiService.get<{ week: number; is_paid: 'Y' | 'N' }[]>(`/payments/chit_users/${chit_id}/pay_details/`);
   },
 
 };

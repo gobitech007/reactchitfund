@@ -19,6 +19,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import CancelIcon from '@mui/icons-material/Cancel';
 
 interface ChitItem {
+  chit_id?: string;
   chit_no: string;
   amount: string | number;
   description?: string;
@@ -31,10 +32,12 @@ interface PaymentPanelProps {
   chitList?: ChitItem[];
   onChangeValues?: (values: {
     chitId: string;
+    chitNo: string;
     baseAmount: number;
     payAmount: number;
     weekSelection: number;
   }) => void;
+  alreadyBaseAmount?: () => boolean;
 }
 
 export interface PaymentData {
@@ -48,7 +51,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   onPaymentSubmit, 
   onCancel,
   chitList = [], // Default to empty array if not provided
-  onChangeValues
+  onChangeValues,
+  alreadyBaseAmount
 }) => {
   // State for form fields
   const [selectedChit, setSelectedChit] = useState<string>('');
@@ -60,13 +64,24 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   // Function to notify parent component of changes
   const notifyChanges = (updates: Partial<{
     chitId: string;
+    chitNo: string;
     baseAmount: number;
     payAmount: number;
     weekSelection: number;
   }>) => {
     if (onChangeValues) {
+      // Find the selected chit in the list to get its chit_id and chit_no
+      const selectedChitItem = chitList.find(chit => chit.chit_no === (updates.chitId || selectedChit));
+      
+      // Use the chit_id from the selected chit if available, otherwise use the chit_no as fallback
+      const chitId = selectedChitItem?.chit_id || updates.chitId || selectedChit;
+      
+      // Use the chit_no from the selected chit, or fallback to the selectedChit value
+      const chitNo = updates.chitNo !== undefined ? updates.chitNo : (selectedChitItem?.chit_no || selectedChit);
+      
       onChangeValues({
-        chitId: updates.chitId !== undefined ? updates.chitId : selectedChit,
+        chitId: chitId,
+        chitNo: chitNo,
         baseAmount: updates.baseAmount !== undefined ? updates.baseAmount : baseAmount,
         payAmount: updates.payAmount !== undefined ? updates.payAmount : payAmount,
         weekSelection: updates.weekSelection !== undefined ? updates.weekSelection : weekSelection
@@ -83,7 +98,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     // Notify parent of changes
     const updates: any = { payAmount: baseAmount, weekSelection: 1 };
     
-    if (chitList.length === 1) {
+    if (chitList?.length > 0) {
       const chitId = chitList[0].chit_no;
       setSelectedChit(chitId);
       updates.chitId = chitId;
@@ -96,6 +111,15 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   const handleChitChange = (event: SelectChangeEvent) => {
     const newChitId = event.target.value;
     setSelectedChit(newChitId);
+    
+    // Find the selected chit and safely handle its amount
+    const selectedChitAmount = chitList.find(chit => chit.chit_no === newChitId)?.amount;
+    // Convert to string before parsing, provide default of 200 if undefined
+    const amountValue = selectedChitAmount !== undefined 
+      ? (typeof selectedChitAmount === 'number' ? selectedChitAmount : parseInt(selectedChitAmount, 10))
+      : 200;
+      
+    setBaseAmount(amountValue);
     notifyChanges({ chitId: newChitId });
   };
 
@@ -256,6 +280,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           type="number"
           value={baseAmount}
           onChange={handleBaseAmountChange}
+          disabled={alreadyBaseAmount ? alreadyBaseAmount() : undefined}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
