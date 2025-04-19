@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Paper,
@@ -25,30 +25,17 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 // import { DataProvider } from '../context';
 import PaymentIcon from '@mui/icons-material/Payment';
-import CellGrid, { CellData } from '../components/CellGrid';
-import PaymentPanel, { PaymentData } from '../components/PaymentPanel';
+import CellGrid from '../components/CellGrid';
+import PaymentPanel from '../components/PaymentPanel';
 import { withNavigation } from '../utils/withNavigation';
 import { getCurrentWeekWithOrdinal, getCurrentMonthName } from '../utils/date-utils';
 import QRCodeComponent from '../components/QRCodeComponent';
 import { useAuth, useData, useDynamicApiStore } from '../context';
 import {PaymentService, ApiService} from '../services';
+import { CellData, ChitItem, PaymentData, PaymentFormData, PaymentMethod } from '../utils/interface-utils';
 
 interface CellSelectionProps {
   navigate?: (path: string) => void;
-}
-
-// Payment method type
-type PaymentMethod = 'credit_card' | 'upi' | 'debit_card';
-
-// Payment form data interface
-interface PaymentFormData {
-  amount: number;
-  paymentMethod: PaymentMethod;
-  cardNumber?: string;
-  cardName?: string;
-  expiryDate?: string;
-  cvv?: string;
-  upiId?: string;
 }
 
 const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
@@ -102,13 +89,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     // Update chitList when API data is available
     if (chitUsersData && Array.isArray(chitUsersData)) {
       // Type assertion for the API data
-      const typedChitData = chitUsersData as Array<{
-        chit_no?: string;
-        chit_id?: string;
-        name?: string;
-        type?: string;
-        amount?: number | string;
-      }>;
+      const typedChitData = chitUsersData as Array<ChitItem>;
       
       const formattedChitList: ChitListItem[] = typedChitData.map(chit => ({
         chit_no: chit.chit_no || chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
@@ -239,7 +220,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       const transactionId = generateTransactionId();
       
       // If no weeks are selected, default to the first week
-      const weeksToProcess = selectedCells.length > 0 ? selectedCells : [1];
+      const weeksToProcess = selectedCells.length > 0 ? selectedCells : paidCells ? [] : [1];
       
       // Calculate amount per week
       const amountPerWeek = Math.floor(paymentData.amount / weeksToProcess.length);
@@ -340,9 +321,9 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     }
   };
 
-  const handleClearSelection = () => {
-    setSelectedCells([]);
-  };
+  // const handleClearSelection = () => {
+  //   setSelectedCells([]);
+  // };
 
   const handleCloseNotification = () => {
     setNotification(prev => ({ ...prev, open: false }));
@@ -420,9 +401,9 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       return; 
     } 
     // Fetch payment details when chit ID changes
-    if (values.chitId && values.baseAmount.toString().length >= 2) {
-      fetchChitPaymentDetails(values.chitId);
-    }
+    // if (values.chitId && values.baseAmount.toString().length >= 2) {
+    //   fetchChitPaymentDetails(values.chitId);
+    // }
     
     // Update selected cells based on weekSelection
     // This is just an example - you might want to implement your own logic

@@ -15,6 +15,7 @@
     "@types/node": "22.13.13",
     "@types/react": "19.0.12",
     "@types/react-dom": "19.0.4",
+    "axios": "^1.8.4",
     "bootstrap": "5.3.3",
     "i18next": "^23.10.0",
     "i18next-browser-languagedetector": "^7.2.0",

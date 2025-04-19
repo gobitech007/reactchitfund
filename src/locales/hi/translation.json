@@ -12,7 +12,11 @@
     "back": "वापस",
     "next": "अगला",
     "previous": "पिछला",
-    "optional": "वैकल्पिक"
+    "optional": "वैकल्पिक",
+    "error": "त्रुटि",
+    "retry": "पुन: प्रयास करें",
+    "view": "देखें",
+    "close": "बंद करें"
   },
   "navigation": {
     "home": "होम",
@@ -118,5 +122,32 @@
     "month": "महीना",
     "day": "दिन",
     "format": "प्रारूप"
+  },
+  "transactionHistory": {
+    "title": "लेनदेन इतिहास",
+    "noTransactions": "कोई लेनदेन नहीं मिला",
+    "rowsPerPage": "प्रति पृष्ठ पंक्तियाँ",
+    "chitNo": "चिट नंबर",
+    "week": "सप्ताह",
+    "columns": {
+      "transactionId": "लेनदेन आईडी",
+      "chitInfo": "चिट जानकारी",
+      "date": "तारीख",
+      "amount": "राशि",
+      "mobileNumber": "मोबाइल नंबर",
+      "paymentMethod": "भुगतान विधि",
+      "status": "स्थिति"
+    },
+    "status": {
+      "completed": "पूर्ण",
+      "pending": "अपूर्ण",
+      "failed": "विफल"
+    },
+    "paymentMethod": {
+      "card": "कार्ड",
+      "UPI": "यूपीआई",
+      "netbanking": "नेट बैंकिंग",
+      "cash": "नकद"
+    }
   }
 }

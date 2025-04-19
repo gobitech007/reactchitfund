@@ -12,7 +12,11 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
-    "optional": "Optional"
+    "optional": "Optional",
+    "error": "Error",
+    "retry": "Retry",
+    "view": "View",
+    "close": "Close"
   },
   "navigation": {
     "home": "Home",
@@ -119,5 +123,32 @@
     "month": "Month",
     "day": "Day",
     "format": "Format"
+  },
+  "transactionHistory": {
+    "title": "Transaction History",
+    "noTransactions": "No transactions found",
+    "rowsPerPage": "Rows per page",
+    "chitNo": "Chit No",
+    "week": "Week",
+    "columns": {
+      "transactionId": "Transaction ID",
+      "chitInfo": "Chit Info",
+      "date": "Date",
+      "amount": "Amount",
+      "mobileNumber": "Mobile Number",
+      "paymentMethod": "Payment Method",
+      "status": "Status"
+    },
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "paymentMethod": {
+      "card": "Card",
+      "UPI": "UPI",
+      "netbanking": "Net Banking",
+      "cash": "Cash"
+    }
   }
 }

@@ -140,7 +140,9 @@ export const validateAadharNumberDetailed = (number: string): { isValid: boolean
  * @param number - The mobile number to format
  * @returns Formatted mobile number with spaces
  */
-export const formatMobileNumber = (number: string): string => {
+export const formatMobileNumber = (number?: string): string => {
+  if (!number) return '';
+  
   // Remove any non-digit characters
   const digitsOnly = number.replace(/\D/g, "");
   

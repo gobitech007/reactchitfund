@@ -6,16 +6,11 @@ import {
   Typography, 
   styled, 
   useTheme,
-  Tooltip,
-  PaperProps
+  Tooltip
 } from '@mui/material';
+import { CellData, CellProps } from '../utils/interface-utils';
 
 // Define custom props interface for the Cell component
-interface CellProps extends PaperProps {
-  selected?: boolean;
-  disabled?: boolean;
-  paid?: boolean;
-}
 
 // Styled component for the clickable cell
 const Cell = styled(Paper, {
@@ -44,11 +39,6 @@ const Cell = styled(Paper, {
   transition: 'background-color 0.3s, color 0.3s',
   opacity: disabled ? 0.6 : 1,
 }));
-
-export interface CellData {
-  week: number;
-  is_paid: 'Y' | 'N';
-}
 
 interface CellGridProps {
   onCellClick?: (cellNumber: number) => void;

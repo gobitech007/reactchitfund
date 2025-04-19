@@ -12,39 +12,25 @@ import {
   SelectChangeEvent,
   InputAdornment,
   Stack,
-  Alert
+  Alert,
+  IconButton,
+  Tooltip,
+  // Snackbar
 } from '@mui/material';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import PaymentIcon from '@mui/icons-material/Payment';
-import CancelIcon from '@mui/icons-material/Cancel';
-
-interface ChitItem {
-  chit_id?: string;
-  chit_no: string;
-  amount: string | number;
-  description?: string;
-  name?: string;
-}
+// import CancelIcon from '@mui/icons-material/Cancel';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import { ChitItem, ChitListItem, PaymentData, PaypanelChange } from '../utils/interface-utils';
+import { PaymentService } from '../services';
 
 interface PaymentPanelProps {
   onPaymentSubmit: (paymentData: PaymentData) => void;
   onCancel: () => void;
   chitList?: ChitItem[];
-  onChangeValues?: (values: {
-    chitId: string;
-    chitNo: string;
-    baseAmount: number;
-    payAmount: number;
-    weekSelection: number;
-  }) => void;
+  onChangeValues?: (values: PaypanelChange) => void;
   alreadyBaseAmount?: () => boolean;
-}
-
-export interface PaymentData {
-  chitId: string;
-  baseAmount: number;
-  payAmount: number;
-  weekSelection: number;
+  currentUserId?: number; // Add current user ID prop
 }
 
 const PaymentPanel: React.FC<PaymentPanelProps> = ({ 
@@ -52,7 +38,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   onCancel,
   chitList = [], // Default to empty array if not provided
   onChangeValues,
-  alreadyBaseAmount
+  alreadyBaseAmount,
+  currentUserId = 1 // Default to user ID 1 if not provided
 }) => {
   // State for form fields
   const [selectedChit, setSelectedChit] = useState<string>('');
@@ -60,15 +47,16 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   const [payAmount, setPayAmount] = useState<number>(200);
   const [weekSelection, setWeekSelection] = useState<number>(1); // Default to 1 week
   const [error, setError] = useState<string | null>(null);
+  const [showBaseAmountNoValidation, setShowBaseAmountNoValidation] = useState<boolean>(false);
+  const [isCreatingChit, setIsCreatingChit] = useState<boolean>(false);
+  const [notification, setNotification] = useState<{show: boolean, message: string}>({
+    show: false,
+    message: ''
+  });
+  const [isFieldVisible, setIsFieldVisible] = useState<boolean>(false);
   
   // Function to notify parent component of changes
-  const notifyChanges = (updates: Partial<{
-    chitId: string;
-    chitNo: string;
-    baseAmount: number;
-    payAmount: number;
-    weekSelection: number;
-  }>) => {
+  const notifyChanges = (updates: Partial<PaypanelChange>) => {
     if (onChangeValues) {
       // Find the selected chit in the list to get its chit_id and chit_no
       const selectedChitItem = chitList.find(chit => chit.chit_no === (updates.chitId || selectedChit));
@@ -101,6 +89,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     if (chitList?.length > 0) {
       const chitId = chitList[0].chit_no;
       setSelectedChit(chitId);
+      setBaseAmount(chitList[0].amount as number);
       updates.chitId = chitId;
     }
     
@@ -118,14 +107,25 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     const amountValue = selectedChitAmount !== undefined 
       ? (typeof selectedChitAmount === 'number' ? selectedChitAmount : parseInt(selectedChitAmount, 10))
       : 200;
-      
+    
+    setIsCreatingChit(false);
     setBaseAmount(amountValue);
     notifyChanges({ chitId: newChitId });
   };
 
   // Handle base amount change with validation
-  const handleBaseAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBaseAmountChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value, 10);
+    
+    // If in no validation mode, just set the value without validation
+    if (showBaseAmountNoValidation) {
+      setBaseAmount(value);
+      notifyChanges({ baseAmount: value });
+      
+      // Check if the user has completed entering the amount (by checking if the input loses focus)
+      // We'll implement this with a blur event handler
+      return;
+    }
     
     // If empty or not a number, set to minimum
     if (isNaN(value) && value < 0) {
@@ -163,6 +163,71 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     } else {
       notifyChanges({ baseAmount: value });
     }
+    setError(null);
+  };
+  
+  // Handle base amount blur event to create a new chit when in no validation mode
+  const handleBaseAmountBlur = async () => {
+    if (showBaseAmountNoValidation && !isNaN(baseAmount) && baseAmount > 0) {
+      setIsCreatingChit(true);
+      const newChitData: ChitListItem = {
+        user_id: currentUserId,
+        amount: baseAmount,
+        chit_no: (chitList.length + 1)
+      };
+      try {
+        // Create a new chit user
+        const newChit = await PaymentService.createChitUsers(newChitData);
+        
+        if (newChit && newChit.data) {
+          // Convert ChitListItem to ChitItem before pushing to chitList
+          const newChitItem: ChitItem = {
+            chit_id: newChit.data?.chit_id?.toString(),
+            user_id: newChit.data.user_id?.toString(),
+            chit_no: newChit.data.chit_no?.toString(),
+            amount: newChit.data.amount,
+            name: `Chit ${newChit.data.chit_no} - ₹${newChit.data.amount}`
+          };
+          
+          // Add the new chit to the chitList
+          chitList.push(newChitItem);
+          
+          // Select the new chit
+          setSelectedChit(newChitItem.chit_no);
+          
+          // Notify parent of changes
+          notifyChanges({ 
+            // chitId: newChit.chit_no,
+            // chitNo: newChit.chit_no,
+            baseAmount: baseAmount,
+            payAmount: baseAmount,
+            weekSelection: 1
+          });
+          
+          // Show success notification
+          setNotification({
+            show: true,
+            message: `New chit created successfully with amount ₹${baseAmount}`
+          });
+          
+          // Turn off no validation mode
+          setIsCreatingChit(false);
+          setShowBaseAmountNoValidation(true);
+          setIsFieldVisible(false);
+        }
+      } catch (error) {
+        console.error('Error creating new chit:', error);
+        setError('Failed to create new chit. Please try again.'+ error);
+      } finally {
+        setIsCreatingChit(false);
+      }
+    }
+  };
+  
+  // Toggle the base amount field without validation
+  const toggleBaseAmountNoValidation = () => {
+    setIsFieldVisible(true);
+    setShowBaseAmountNoValidation(!showBaseAmountNoValidation);
     setError(null);
   };
 
@@ -236,9 +301,20 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
 
   return (
     <Paper elevation={3} sx={{ p: 3, width: '100%', maxWidth: 400 }}>
-      <Typography variant="h6" component="h2" gutterBottom>
-        Payment Details
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+        <Typography variant="h6" component="h2" gutterBottom sx={{ mr: 1 }}>
+          Payment Details
+        </Typography>
+        <Tooltip title="Create new chit">
+          <IconButton 
+            color={showBaseAmountNoValidation ? "primary" : "default"} 
+            onClick={toggleBaseAmountNoValidation}
+            size="small"
+          >
+            <AddCircleIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
       
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -246,8 +322,10 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         </Alert>
       )}
       
-      <Stack spacing={3}>
+      
+      <Stack spacing={3} >
         {/* Chit Selection Dropdown */}
+      {!isFieldVisible && (
         <FormControl fullWidth>
           <InputLabel id="chit-select-label">Select Chit</InputLabel>
           <Select
@@ -272,15 +350,16 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             )}
           </Select>
         </FormControl>
-        
+      )}
         {/* Base Amount Field */}
         <TextField
           fullWidth
-          label="Base Amount"
+          label={showBaseAmountNoValidation ? "Base Amount (No Validation)" : "Base Amount"}
           type="number"
           value={baseAmount}
           onChange={handleBaseAmountChange}
-          disabled={alreadyBaseAmount ? alreadyBaseAmount() : undefined}
+          onBlur={handleBaseAmountBlur}
+          disabled={(!showBaseAmountNoValidation && !isCreatingChit) }
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -288,11 +367,14 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
               </InputAdornment>
             ),
           }}
-          helperText="Minimum ₹200, in hundreds only (200, 300, 400, etc.)"
+          helperText={showBaseAmountNoValidation ? "Enter any amount and press Tab to create a new chit" : "Minimum ₹200, in hundreds only (200, 300, 400, etc.)"}
           required
+          color={showBaseAmountNoValidation ? "secondary" : "primary"}
         />
         
         {/* Pay Amount Field */}
+        
+      {!isFieldVisible && (
         <TextField
           fullWidth
           label="Pay Amount"
@@ -308,10 +390,11 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           }}
           helperText={`Minimum ₹${baseAmount}`}
           required
-        />
+        />)}
         
         {/* Action Buttons */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+        {!isFieldVisible && (
           <Button
             variant="contained"
             color="primary"
@@ -320,16 +403,16 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             disabled={error !== null}
           >
             Pay Now
-          </Button>
+          </Button>)}
           
-          <Button
+          {/* <Button
             variant="outlined"
             color="secondary"
             startIcon={<CancelIcon />}
             onClick={onCancel}
           >
             Cancel
-          </Button>
+          </Button> */}
         </Box>
       </Stack>
     </Paper>

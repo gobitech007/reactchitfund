@@ -95,12 +95,22 @@ export const getCurrentMonthName = (): string => {
  * @returns The formatted date string
  */
 export const formatDate = (
-  date: Date,
+  date: Date | string | null | undefined,
   format: string = 'MM/DD/YYYY'
 ): string => {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = String(date.getFullYear());
+  if (!date) return '';
+  
+  // Convert to Date object if it's a string
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // Check if date is valid
+  if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+    return '';
+  }
+  
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const year = String(dateObj.getFullYear());
 
   let result = format;
   result = result.replace(/DD/g, day);

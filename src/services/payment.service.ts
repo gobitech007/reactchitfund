@@ -3,64 +3,8 @@
  * Handles payment processing and transaction management
  */
 
+import { Transaction, SavedPaymentMethod, PaymentStatus, PaymentMethod, CardDetails, ChitItem, ChitListItem } from '../utils/interface-utils';
 import ApiService, { ApiResponse } from './api.service';
-
-// Payment method types
-export type PaymentMethod = 'credit_card' | 'debit_card' | 'upi' | 'net_banking' | 'wallet';
-
-// Payment status types
-export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
-
-// Card details interface
-export interface CardDetails {
-  cardNumber: string;
-  cardName: string;
-  expiryDate: string;
-  cvv: string;
-}
-
-// UPI details interface
-export interface UpiDetails {
-  upiId: string;
-}
-
-// Payment request interface
-export interface PaymentRequest {
-  amount: number;
-  paymentMethod: PaymentMethod;
-  description?: string;
-  selectedWeeks?: number[];
-  cardDetails?: CardDetails;
-  upiDetails?: UpiDetails;
-  savePaymentMethod?: boolean;
-}
-
-// Transaction interface
-export interface Transaction {
-  id: string;
-  userId: string;
-  amount: number;
-  paymentMethod: PaymentMethod;
-  status: PaymentStatus;
-  description?: string;
-  selectedWeeks?: number[];
-  transaction_id: string; // Required transaction ID
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Saved payment method interface
-export interface SavedPaymentMethod {
-  id: string;
-  userId: string;
-  type: PaymentMethod;
-  lastFour?: string;
-  expiryDate?: string;
-  cardName?: string;
-  upiId?: string;
-  isDefault: boolean;
-  createdAt: string;
-}
 
 /**
  * Payment Service interface
@@ -83,6 +27,8 @@ export interface IPaymentService {
   validateUpiId: (upiId: string) => { isValid: boolean; error?: string };
   getChitUsers: (user_id: string) => Promise<ApiResponse<{ status: PaymentStatus }>>;
   getChitPaymentDetails: (chit_id: string) => Promise<ApiResponse<{ week: number; is_paid: 'Y' | 'N' }[]>>;
+  getTransactionHistoryPage: (params: { skip?: number, limit?: number }) => Promise<ApiResponse<any>>;
+  createChitUsers: (chitUsers: Partial<ChitListItem>) => Promise<ApiResponse<ChitListItem>>;
 }
 
 /**
@@ -273,6 +219,13 @@ export const PaymentService: IPaymentService = {
     }
     return await ApiService.get<{ status: PaymentStatus }>(`/payments/chits/user/${user_id}`);
   },
+  createChitUsers: async (chitUsers: Partial<ChitListItem>) => {
+    if (!chitUsers.user_id) {
+      throw new Error('User ID are required');
+    }
+    // Send the chitUsers object directly, not wrapped in another object
+    return await ApiService.post<ChitListItem>(`/payments/chit_users/`, chitUsers);
+  },
   
   /**Get chit payment details by chit_id */
   getChitPaymentDetails: async (chit_id: string) => {
@@ -281,6 +234,13 @@ export const PaymentService: IPaymentService = {
     }
     return await ApiService.get<{ week: number; is_paid: 'Y' | 'N' }[]>(`/payments/chit_users/${chit_id}/pay_details/`);
   },
+  getTransactionHistoryPage: async(params: { skip?: number, limit?: number }) => {
+      // Convert numeric parameters to strings as required by ApiService
+      const stringParams: Record<string, string> = {};
+      if (params.skip !== undefined) stringParams.skip = params.skip.toString();
+      if (params.limit !== undefined) stringParams.limit = params.limit.toString();      
+      return await ApiService.get('/payments/transaction-history/', stringParams);
+  }
 
 };
 
