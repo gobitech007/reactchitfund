@@ -377,7 +377,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         const newDisabledCells = response.data
           .filter(cell => cell.is_paid === 'Y')
           .map(cell => cell.week );
-        setSelectedCells([...newDisabledCells]);
+        // setSelectedCells([...newDisabledCells]);
         setDisabledCells(newDisabledCells);
       }
     } catch (error) {
@@ -396,8 +396,9 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     baseAmount: number;
     payAmount: number;
     weekSelection: number;
-  }) => {   
-    if (values.baseAmount?.toString().length < 3 || values.payAmount?.toString().length < 3) {
+  }) => { 
+    setSelectedCells([]);  
+    if (values.baseAmount?.toString().length < 3 || (values && values.payAmount !== 0 && values.payAmount?.toString().length < 3)) {
       return; 
     } 
     // Fetch payment details when chit ID changes
@@ -407,8 +408,9 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     
     // Update selected cells based on weekSelection
     // This is just an example - you might want to implement your own logic
-    const newSelectedCells: number[] = [...selectedCells]; // Include previous array values
-    const maxSelectedCell = selectedCells.length > 0 ? Math.max(...selectedCells) : 0;
+    const paidCellsLength = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
+    const newSelectedCells: number[] = paidCellsLength; // Include previous array values
+    const maxSelectedCell = paidCellsLength.length > 0 ? Math.max(...paidCellsLength) : 0;
     for (let i = 1; i <= (values.weekSelection + maxSelectedCell); i++) {
       // Only add to selected cells if not already paid and not already in the array
       const isPaid = paidCells.some(cell => cell.week === i && cell.is_paid === 'Y');
@@ -418,12 +420,16 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       }
     }
     setSelectedCells(newSelectedCells);
-    
     // Update payment data
     setPaymentData(prev => ({
       ...prev,
       amount: values.payAmount
     }));
+  };
+
+  const weekSelected = () => {
+    const paidWeeks = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
+    return selectedCells.filter(cellNumber => !paidWeeks.includes(cellNumber));
   };
 
   return (
@@ -480,7 +486,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
             
             {selectedCells.length > 0 && (
               <Alert severity="info" sx={{ mb: 2 }}>
-                You have selected {selectedCells.length} week(s): {selectedCells.join(', ')}
+                You have selected {weekSelected().length} week(s): {weekSelected().join(', ')}
               </Alert>
             )}
 

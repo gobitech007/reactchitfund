@@ -69,11 +69,20 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       // Use the chit_no from the selected chit, or fallback to the selectedChit value
       const chitNo = updates.chitNo !== undefined ? updates.chitNo : (selectedChitItem?.chit_no || selectedChit);
       
+      // Ensure we never pass NaN values
+      const safeBaseAmount = updates.baseAmount !== undefined 
+        ? (!isNaN(updates.baseAmount) ? updates.baseAmount : 200) 
+        : (!isNaN(baseAmount) ? baseAmount : 200);
+      
+      const safePayAmount = updates.payAmount !== undefined 
+        ? (!isNaN(updates.payAmount) ? updates.payAmount : safeBaseAmount) 
+        : (!isNaN(payAmount) ? payAmount : safeBaseAmount);
+      
       onChangeValues({
         chitId: chitId,
         chitNo: chitNo,
-        baseAmount: updates.baseAmount !== undefined ? updates.baseAmount : baseAmount,
-        payAmount: updates.payAmount !== undefined ? updates.payAmount : payAmount,
+        baseAmount: safeBaseAmount,
+        payAmount: safePayAmount,
         weekSelection: updates.weekSelection !== undefined ? updates.weekSelection : weekSelection
       });
     }
@@ -82,22 +91,38 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   // Update pay amount when base amount changes
   // Auto-select the chit if there's only one in the list
   useEffect(() => {
-    setPayAmount(baseAmount);
-    setWeekSelection(1); // Reset to 1 week when base amount changes
+    // Only set payAmount if baseAmount is a valid number
+    if (!isNaN(baseAmount)) {
+      setPayAmount(baseAmount);
+    } else {
+      setPayAmount(200); // Default to 200 if baseAmount is NaN
+    }
     
     // Notify parent of changes
-    const updates: any = { weekSelection: 1 };
-    
-    if (chitList?.length > 0) {
-      const chitId = selectedChit ? selectedChit : chitList[0].chit_no;
-      setSelectedChit(chitId);
-      setBaseAmount(baseAmount as number);
-      updates.chitId = chitId;
-    }
-    if (selectedCells?.length > 0 && payAmount !== baseAmount * selectedCells.length) {
-      setPayAmount(baseAmount * selectedCells.length);
-    }
-    notifyChanges(updates);
+    // if (selectedCells.length < 1) {
+      // setWeekSelection(1); // Reset to 1 week when base amount changes
+    // } else {
+      const updates: any = { weekSelection: 1 };
+      
+      if (chitList?.length > 0) {
+        const chitId = selectedChit ? selectedChit : chitList[0].chit_no;
+        setSelectedChit(chitId);
+        
+        // Ensure baseAmount is a valid number
+        if (!isNaN(baseAmount)) {
+          setBaseAmount(baseAmount);
+        } else {
+          setBaseAmount(200); // Default to 200 if baseAmount is NaN
+        }
+        
+        updates.chitId = chitId;
+      }
+      // if (selectedCells?.length > 0 && payAmount !== baseAmount * selectedCells.length) {
+      //   setPayAmount(baseAmount * selectedCells.length);
+      // }
+      notifyChanges(updates);
+
+    // }
   }, [baseAmount, chitList, selectedChit]);
 
   // Handle chit selection change
@@ -125,8 +150,14 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     
     // If in no validation mode, just set the value without validation
     if (showBaseAmountNoValidation) {
-      setBaseAmount(value);
-      notifyChanges({ baseAmount: value });
+      // Even in no validation mode, ensure we don't set NaN
+      if (isNaN(value)) {
+        setBaseAmount(200);
+        notifyChanges({ baseAmount: 200 });
+      } else {
+        setBaseAmount(value);
+        notifyChanges({ baseAmount: value });
+      }
       
       // Check if the user has completed entering the amount (by checking if the input loses focus)
       // We'll implement this with a blur event handler
@@ -134,7 +165,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     }
     
     // If empty or not a number, set to minimum
-    if (isNaN(value) && value < 0) {
+    if (isNaN(value) || value < 0) {
       setBaseAmount(200);
       notifyChanges({ baseAmount: 200 });
       return;
@@ -242,9 +273,11 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     const value = parseInt(event.target.value, 10);
     
     // If empty or not a number, set to base amount
-    if (isNaN(value) && value < 0) {
-      setPayAmount(baseAmount);
-      notifyChanges({ payAmount: baseAmount });
+    if (isNaN(value) || value < 0) {
+      // Ensure baseAmount is also not NaN
+      const safeBaseAmount = !isNaN(baseAmount) ? baseAmount : 200;
+      setPayAmount(safeBaseAmount);
+      notifyChanges({ payAmount: safeBaseAmount });
       return;
     }
     
@@ -362,7 +395,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           fullWidth
           label={showBaseAmountNoValidation ? "Base Amount (No Validation)" : "Base Amount"}
           type="number"
-          value={baseAmount}
+          value={!isNaN(baseAmount) ? baseAmount : ''}
           onChange={handleBaseAmountChange}
           onBlur={handleBaseAmountBlur}
           disabled={(!showBaseAmountNoValidation && !isCreatingChit) }
@@ -385,7 +418,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           fullWidth
           label="Pay Amount"
           type="number"
-          value={payAmount}
+          value={payAmount !== undefined && !isNaN(payAmount) ? payAmount : ''}
           onChange={handlePayAmountChange}
           InputProps={{
             startAdornment: (
