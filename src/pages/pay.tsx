@@ -33,6 +33,7 @@ import QRCodeComponent from '../components/QRCodeComponent';
 import { useAuth, useData, useDynamicApiStore } from '../context';
 import {PaymentService, ApiService} from '../services';
 import { CellData, ChitItem, PaymentData, PaymentFormData, PaymentMethod } from '../utils/interface-utils';
+import { match } from 'assert';
 
 interface CellSelectionProps {
   navigate?: (path: string) => void;
@@ -142,7 +143,6 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         });
         return prev;
       }
-      
       // Add the new selection
       return [...prev, cellNumber];
     });
@@ -377,7 +377,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         const newDisabledCells = response.data
           .filter(cell => cell.is_paid === 'Y')
           .map(cell => cell.week );
-        
+        setSelectedCells([...newDisabledCells]);
         setDisabledCells(newDisabledCells);
       }
     } catch (error) {
@@ -397,21 +397,23 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     payAmount: number;
     weekSelection: number;
   }) => {   
-    if (values.baseAmount?.toString().length < 2) {
+    if (values.baseAmount?.toString().length < 3 || values.payAmount?.toString().length < 3) {
       return; 
     } 
     // Fetch payment details when chit ID changes
-    // if (values.chitId && values.baseAmount.toString().length >= 2) {
-    //   fetchChitPaymentDetails(values.chitId);
-    // }
+    if (values.chitId && values.baseAmount.toString().length >= 2) {
+      fetchChitPaymentDetails(values.chitId);
+    }
     
     // Update selected cells based on weekSelection
     // This is just an example - you might want to implement your own logic
-    const newSelectedCells: number[] = [];
-    for (let i = 1; i <= values.weekSelection; i++) {
-      // Only add to selected cells if not already paid
+    const newSelectedCells: number[] = [...selectedCells]; // Include previous array values
+    const maxSelectedCell = selectedCells.length > 0 ? Math.max(...selectedCells) : 0;
+    for (let i = 1; i <= (values.weekSelection + maxSelectedCell); i++) {
+      // Only add to selected cells if not already paid and not already in the array
       const isPaid = paidCells.some(cell => cell.week === i && cell.is_paid === 'Y');
-      if (!isPaid) {
+      const isAlreadySelected = newSelectedCells.includes(i);
+      if (!isPaid && !isAlreadySelected) {
         newSelectedCells.push(i);
       }
     }
@@ -452,6 +454,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               onPaymentSubmit={handlePayModal}
               onCancel={handlePaymentCancel}
               chitList={chitList}
+              selectedCells={selectedCells}
               onChangeValues={handlePaymentValuesChange}
               alreadyBaseAmount={handleDisableBaseAmount}
             />

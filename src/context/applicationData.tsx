@@ -94,8 +94,74 @@ export const useDynamicApiStore = (key: ApiEndpointKey, options: DynamicApiOptio
         
         // For chitUsers, we need the user ID
         let apiResponse: any;
-        if (key === 'chitUsers' && currentUser?.user_id) {
-          apiResponse = await apiFunction(currentUser.user_id);
+        if (key === 'chitUsers') {
+          console.log('Preparing to fetch chit users, current user:', currentUser);
+          
+          // Try to get user_id from different possible properties
+          let userId = null;
+          
+          // First check common properties
+          if (currentUser?.user_id) {
+            userId = currentUser.user_id;
+            console.log('Found user_id property:', userId);
+          } else if (currentUser?.id) {
+            userId = currentUser.id;
+            console.log('Found id property:', userId);
+          } else if (currentUser?.userId) {
+            userId = currentUser.userId;
+            console.log('Found userId property:', userId);
+          } else if (currentUser?._id) {
+            userId = currentUser._id;
+            console.log('Found _id property:', userId);
+          }
+          
+          // If not found, try to extract from token or search through all properties
+          if (!userId && typeof currentUser === 'object' && currentUser !== null) {
+            console.log('Searching through all user properties for ID-like values');
+            
+            // Look for any property that looks like an ID
+            for (const [key, value] of Object.entries(currentUser)) {
+              if (typeof value === 'string' || typeof value === 'number') {
+                const strValue = String(value);
+                // Check for UUID format or numeric ID
+                if (strValue.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) || 
+                    strValue.match(/^\d+$/)) {
+                  userId = strValue;
+                  console.log(`Found potential ID in property ${key}:`, userId);
+                  break;
+                }
+              }
+            }
+          }
+          
+          // If still not found, try to use a default or fallback
+          if (!userId) {
+            // Try to get from localStorage directly as a last resort
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+              try {
+                const parsedUser = JSON.parse(storedUser);
+                userId = parsedUser.user_id || parsedUser.id || parsedUser._id || parsedUser.userId;
+                console.log('Found user ID in localStorage:', userId);
+              } catch (e) {
+                console.error('Error parsing stored user:', e);
+              }
+            }
+            
+            // If we still don't have a user ID, use a default for testing
+            if (!userId) {
+              console.warn('No user ID found, using default/fallback ID');
+              userId = '1'; // Default ID for testing - replace with appropriate fallback
+            }
+          }
+          
+          if (!userId) {
+            console.error('User ID not found in currentUser object:', currentUser);
+            throw new Error('User ID is required but not found in user data');
+          }
+          
+          console.log('Fetching chit users with user ID:', userId);
+          apiResponse = await apiFunction(userId);
         } else {
           // Call the API function with any provided parameters
           apiResponse = await apiFunction(...params);

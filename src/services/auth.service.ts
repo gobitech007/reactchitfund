@@ -190,7 +190,8 @@ export const AuthService = {
   getCurrentUserData: async () => {
     try {
       const response = await ApiService.get('/auth/me');
-      return response.data;
+      // Return the full response object to maintain consistency with other methods
+      return response;
     } catch (error) {
       console.error("Error fetching user data:", error);
       throw error;

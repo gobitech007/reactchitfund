@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   TextField,
@@ -28,6 +28,7 @@ interface PaymentPanelProps {
   onPaymentSubmit: (paymentData: PaymentData) => void;
   onCancel: () => void;
   chitList?: ChitItem[];
+  selectedCells?: number[];
   onChangeValues?: (values: PaypanelChange) => void;
   alreadyBaseAmount?: () => boolean;
   currentUserId?: number; // Add current user ID prop
@@ -37,6 +38,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   onPaymentSubmit, 
   onCancel,
   chitList = [], // Default to empty array if not provided
+  selectedCells = [], // Default to empty array if not provided
   onChangeValues,
   alreadyBaseAmount,
   currentUserId = 1 // Default to user ID 1 if not provided
@@ -56,7 +58,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   const [isFieldVisible, setIsFieldVisible] = useState<boolean>(false);
   
   // Function to notify parent component of changes
-  const notifyChanges = (updates: Partial<PaypanelChange>) => {
+  const notifyChanges = useCallback((updates: Partial<PaypanelChange>) => {
     if (onChangeValues) {
       // Find the selected chit in the list to get its chit_id and chit_no
       const selectedChitItem = chitList.find(chit => chit.chit_no === (updates.chitId || selectedChit));
@@ -75,7 +77,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         weekSelection: updates.weekSelection !== undefined ? updates.weekSelection : weekSelection
       });
     }
-  };
+  }, [onChangeValues, chitList, selectedChit, baseAmount, payAmount, weekSelection]);
   
   // Update pay amount when base amount changes
   // Auto-select the chit if there's only one in the list
@@ -84,17 +86,19 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     setWeekSelection(1); // Reset to 1 week when base amount changes
     
     // Notify parent of changes
-    const updates: any = { payAmount: baseAmount, weekSelection: 1 };
+    const updates: any = { weekSelection: 1 };
     
     if (chitList?.length > 0) {
-      const chitId = chitList[0].chit_no;
+      const chitId = selectedChit ? selectedChit : chitList[0].chit_no;
       setSelectedChit(chitId);
-      setBaseAmount(chitList[0].amount as number);
+      setBaseAmount(baseAmount as number);
       updates.chitId = chitId;
     }
-    
+    if (selectedCells?.length > 0 && payAmount !== baseAmount * selectedCells.length) {
+      setPayAmount(baseAmount * selectedCells.length);
+    }
     notifyChanges(updates);
-  }, [baseAmount, chitList]);
+  }, [baseAmount, chitList, selectedChit]);
 
   // Handle chit selection change
   const handleChitChange = (event: SelectChangeEvent) => {
@@ -103,6 +107,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     
     // Find the selected chit and safely handle its amount
     const selectedChitAmount = chitList.find(chit => chit.chit_no === newChitId)?.amount;
+    const selectedChitId = chitList.find(chit => chit.chit_no === newChitId)?.chit_id;
     // Convert to string before parsing, provide default of 200 if undefined
     const amountValue = selectedChitAmount !== undefined 
       ? (typeof selectedChitAmount === 'number' ? selectedChitAmount : parseInt(selectedChitAmount, 10))
@@ -110,7 +115,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     
     setIsCreatingChit(false);
     setBaseAmount(amountValue);
-    notifyChanges({ chitId: newChitId });
+    setPayAmount(amountValue);
+    notifyChanges({ chitId: selectedChitId, chitNo: newChitId, baseAmount: amountValue, payAmount: amountValue });
   };
 
   // Handle base amount change with validation
