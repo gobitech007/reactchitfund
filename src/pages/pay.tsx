@@ -131,7 +131,18 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     setSelectedCells(prev => {
       // If already selected, remove it
       if (prev.includes(cellNumber)) {
-        return prev.filter(cell => cell !== cellNumber);
+        // When removing a cell, only allow removing the highest number
+        // to maintain sequential selection
+        if (cellNumber === Math.max(...prev)) {
+          return prev.filter(cell => cell !== cellNumber);
+        } else {
+          setNotification({
+            open: true,
+            message: 'You can only deselect the last selected week',
+            severity: 'warning'
+          });
+          return prev;
+        }
       }
       
       // If max selections reached, show warning and don't add
@@ -143,8 +154,27 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         });
         return prev;
       }
-      // Add the new selection
-      return [...prev, cellNumber];
+
+      // For sequential selection, check if the new cell is the next in sequence
+      if (prev.length === 0) {
+        // First selection can be any cell
+        return [cellNumber];
+      } else {
+        // Get the highest currently selected cell
+        const highestSelected = Math.max(...prev);
+        
+        // Only allow selection if it's the next cell in sequence
+        if (cellNumber === highestSelected + 1) {
+          return [...prev, cellNumber];
+        } else {
+          setNotification({
+            open: true,
+            message: 'You must select weeks in sequential order',
+            severity: 'warning'
+          });
+          return prev;
+        }
+      }
     });
   };
 
