@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services';
+import tokenService from '../services/token.service';
 
 // Create the authentication context
 const AuthContext = createContext();
@@ -22,6 +23,9 @@ export const AuthProvider = ({ children }) => {
     const fetchData = async () => {
       setLoading(true);
       console.log('Checking authentication status...');
+      
+      // Initialize token service for automatic token refresh
+      tokenService.init();
       
       // Check if we have an auth token
       if (AuthService.isAuthenticated()) {
@@ -86,6 +90,11 @@ export const AuthProvider = ({ children }) => {
     };
     
     fetchData();
+    
+    // Clean up token refresh when component unmounts
+    return () => {
+      tokenService.clearTokenRefresh();
+    };
   }, []);
 
   // Login function
@@ -178,6 +187,10 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function
   const logout = () => {
+    // Clear token refresh before logout
+    tokenService.clearTokenRefresh();
+    
+    // Perform logout
     AuthService.logout();
     setCurrentUser(null);
   };

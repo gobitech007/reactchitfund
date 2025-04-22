@@ -98,10 +98,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       setPayAmount(200); // Default to 200 if baseAmount is NaN
     }
     
-    // Notify parent of changes
-    // if (selectedCells.length < 1) {
-      // setWeekSelection(1); // Reset to 1 week when base amount changes
-    // } else {
+    
       const updates: any = { weekSelection: 1 };
       
       if (chitList?.length > 0) {
@@ -117,12 +114,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         
         updates.chitId = chitId;
       }
-      // if (selectedCells?.length > 0 && payAmount !== baseAmount * selectedCells.length) {
-      //   setPayAmount(baseAmount * selectedCells.length);
-      // }
-      notifyChanges(updates);
-
-    // }
+      console.log(selectedCells);
+      if (selectedCells?.length > 0 && payAmount !== baseAmount * selectedCells.length) {
+        // setPayAmount(baseAmount * selectedCells.length);
+      }
+      // Notify parent of changes
+        notifyChanges(updates);
   }, [baseAmount, chitList, selectedChit]);
 
   // Handle chit selection change

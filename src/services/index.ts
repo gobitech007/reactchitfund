@@ -7,6 +7,7 @@ export { default as ApiService } from './api.service';
 export { default as AuthService } from './auth.service';
 export { default as UserService } from './user.service';
 export { default as PaymentService } from './payment.service';
+export { default as TokenService } from './token.service';
 
 // Export types
 export type { User, LoginRequest, LoginResponse, RegisterRequest } from './auth.service';

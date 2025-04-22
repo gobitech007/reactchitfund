@@ -72,7 +72,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   
   // Get chit users data from the store
   const chitUsersData = useDynamicApiStore('chitUsers', { 
-    params: currentUser?.user_id ? [currentUser.user_id] : [] 
+    params: currentUser?.user_id ? [currentUser.user_id] : [], 
   });
   
   // Access the full store for debugging and get loading/error states
@@ -103,11 +103,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         setChitList(formattedChitList);
         
         // If there's only one chit, fetch its payment details automatically
-        if (formattedChitList.length === 1 && formattedChitList[0].chit_id) {
+        if (formattedChitList.length === 1 && formattedChitList[0].chit_id && disabledCells.length === 0) {
           fetchChitPaymentDetails(formattedChitList[0].chit_id);
         }
       }
     }
+    console.log(selectedCells)
   }, [store, chitUsersData, isLoading, error]);
   
   // Define the chit list item type
@@ -407,7 +408,6 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         const newDisabledCells = response.data
           .filter(cell => cell.is_paid === 'Y')
           .map(cell => cell.week );
-        // setSelectedCells([...newDisabledCells]);
         setDisabledCells(newDisabledCells);
       }
     } catch (error) {
@@ -432,7 +432,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       return; 
     } 
     // Fetch payment details when chit ID changes
-    if (values.chitId && values.baseAmount.toString().length >= 2) {
+    if (values.chitId && values.baseAmount.toString().length >= 2 && disabledCells.length === 0) {
       fetchChitPaymentDetails(values.chitId);
     }
     

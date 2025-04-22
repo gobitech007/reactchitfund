@@ -4,6 +4,7 @@
  */
 
 import { getApiUrl, isDebugEnabled } from '../utils/env-utils';
+import tokenService from './token.service';
 
 // Log environment in development mode
 if (isDebugEnabled()) {
@@ -81,6 +82,19 @@ export const apiRequest = async <T = any>(
   options: ApiRequestOptions
 ): Promise<ApiResponse<T>> => {
   try {
+    // Skip token refresh for auth endpoints to avoid infinite loops
+    const isAuthEndpoint = endpoint.startsWith('/auth/') && 
+                          !endpoint.startsWith('/auth/validate-token');
+    
+    // Check if token needs refresh before making the request
+    if (!isAuthEndpoint) {
+      const token = localStorage.getItem('authToken');
+      if (token && tokenService.willTokenExpireSoon(token)) {
+        console.log('Token will expire soon, attempting to refresh...');
+        await tokenService.refreshToken();
+      }
+    }
+    
     // Build URL with query parameters if provided
     let url = `${API_URL}${endpoint}`;
     if (options.params) {
@@ -97,7 +111,7 @@ export const apiRequest = async <T = any>(
       ...options.headers
     };
 
-    // Add auth token if available
+    // Add auth token if available (get fresh token after possible refresh)
     const token = localStorage.getItem('authToken');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

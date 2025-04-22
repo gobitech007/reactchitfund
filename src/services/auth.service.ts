@@ -3,6 +3,7 @@
  * Handles user authentication, registration, and session management
  */
 import ApiService from './api.service';
+import tokenService from './token.service';
 
 // User interfaces
 export interface User {
@@ -84,6 +85,9 @@ export const AuthService = {
       if (response.data.refreshToken) {
         localStorage.setItem('refreshToken', response.data.refreshToken);
       }
+      
+      // Set up automatic token refresh
+      tokenService.setupTokenRefresh(response.data.access_token);
     }
 
     return response;
@@ -114,6 +118,10 @@ export const AuthService = {
    * Removes auth tokens and user data from localStorage
    */
   logout: () => {
+    // Clear token refresh
+    tokenService.clearTokenRefresh();
+    
+    // Remove tokens and user data from localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
@@ -164,18 +172,22 @@ export const AuthService = {
    * @returns Promise with new token response
    */
   refreshToken: async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      return { data: null, error: 'No refresh token available', status: 401 };
-    }
-
-    const response = await ApiService.post<{ token: string }>('/auth/refresh-token', { refreshToken });
+    // Use the token service to refresh the token
+    const success = await tokenService.refreshToken();
     
-    if (response.data && response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
+    if (success) {
+      return { 
+        data: { token: localStorage.getItem('authToken') || '' }, 
+        error: null, 
+        status: 200 
+      };
+    } else {
+      return { 
+        data: null, 
+        error: 'Failed to refresh token', 
+        status: 401 
+      };
     }
-    
-    return response;
   },
 
   /**
