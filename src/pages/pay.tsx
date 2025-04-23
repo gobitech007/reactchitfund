@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -104,7 +104,8 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         
         // If there's only one chit, fetch its payment details automatically
         if (formattedChitList.length === 1 && formattedChitList[0].chit_id && disabledCells.length === 0) {
-          fetchChitPaymentDetails(formattedChitList[0].chit_id);
+          // Use cached data if available
+          fetchChitPaymentDetailsRef.current(formattedChitList[0].chit_id, false);
         }
       }
     }
@@ -335,7 +336,8 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       
       // Refresh payment details to update the UI with newly paid weeks
       if (selectedChit && selectedChit.chit_no) {
-        fetchChitPaymentDetails(selectedChit.chit_no);
+        // Force refresh after payment to get updated data
+        fetchChitPaymentDetailsRef.current(selectedChit.chit_no, true);
       }
 
       // In a real app, you might navigate to another page after successful payment
@@ -393,21 +395,64 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     });
   };
   
-  // Fetch payment details for a specific chit
-  const fetchChitPaymentDetails = async (chitId: string) => {
+  // Create refs to track API call state and cache results
+  const lastFetchedChitIdRef = useRef<string | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
+  const lastFetchTimeRef = useRef<number>(0);
+  const cachedResultsRef = useRef<{[key: string]: CellData[]}>({});
+  
+  // Create a ref for the fetchChitPaymentDetails function
+  const fetchChitPaymentDetailsRef = useRef(async (chitId: string, forceRefresh: boolean = false) => {
     if (!chitId) return;
     
+    // Skip if already fetching the same chit
+    if (isFetchingRef.current && lastFetchedChitIdRef.current === chitId) {
+      console.log('Skipping duplicate fetch request for chit:', chitId);
+      return;
+    }
+    
+    // Check if we have cached results and it's not a forced refresh
+    const currentTime = Date.now();
+    const cacheAge = currentTime - lastFetchTimeRef.current;
+    const CACHE_TTL = 60000; // 1 minute cache TTL
+    
+    if (
+      !forceRefresh && 
+      lastFetchedChitIdRef.current === chitId && 
+      cachedResultsRef.current[chitId] && 
+      cacheAge < CACHE_TTL
+    ) {
+      console.log('Using cached results for chit:', chitId);
+      setPaidCells(cachedResultsRef.current[chitId]);
+      
+      // Update disabled cells from cache
+      const newDisabledCells = cachedResultsRef.current[chitId]
+        .filter(cell => cell.is_paid === 'Y')
+        .map(cell => cell.week);
+      setDisabledCells(newDisabledCells);
+      return;
+    }
+    
+    // Set fetching state
+    isFetchingRef.current = true;
+    lastFetchedChitIdRef.current = chitId;
+    
     try {
+      console.log('Fetching payment details for chit:', chitId);
       const response = await PaymentService.getChitPaymentDetails(chitId);
       
       if (response.data) {
+        // Update cache
+        cachedResultsRef.current[chitId] = response.data;
+        lastFetchTimeRef.current = Date.now();
+        
         // Set paid cells from the response
         setPaidCells(response.data);
         
         // Update disabled cells to include paid cells
         const newDisabledCells = response.data
           .filter(cell => cell.is_paid === 'Y')
-          .map(cell => cell.week );
+          .map(cell => cell.week);
         setDisabledCells(newDisabledCells);
       }
     } catch (error) {
@@ -417,8 +462,35 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         message: `Failed to load payment details: ${error instanceof Error ? error.message : 'Unknown error'}`,
         severity: 'error'
       });
+    } finally {
+      // Reset fetching state
+      isFetchingRef.current = false;
     }
-  };
+  });
+  
+  // Cleanup and reset refs when component unmounts
+  useEffect(() => {
+    return () => {
+      // Reset all refs when component unmounts
+      lastFetchedChitIdRef.current = null;
+      isFetchingRef.current = false;
+      lastFetchTimeRef.current = 0;
+      cachedResultsRef.current = {};
+    };
+  }, []);
+  
+  // Function to call the ref's current value
+  const fetchChitPaymentDetails = useCallback((chitId: string, forceRefresh: boolean = false) => {
+    fetchChitPaymentDetailsRef.current(chitId, forceRefresh);
+  }, []);
+  
+  // Function to clear the cache if needed
+  const clearPaymentDetailsCache = useCallback(() => {
+    lastFetchedChitIdRef.current = null;
+    lastFetchTimeRef.current = 0;
+    cachedResultsRef.current = {};
+    console.log('Payment details cache cleared');
+  }, []);
 
   // Handle payment panel value changes
   const handlePaymentValuesChange = (values: {
