@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
@@ -14,34 +15,35 @@ import {
   Stack,
   Alert,
   IconButton,
-  Tooltip,
-  // Snackbar
+  Tooltip
 } from '@mui/material';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import PaymentIcon from '@mui/icons-material/Payment';
-// import CancelIcon from '@mui/icons-material/Cancel';
+import CancelIcon from '@mui/icons-material/Cancel';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import { ChitItem, ChitListItem, PaymentData, PaypanelChange } from '../utils/interface-utils';
 import { PaymentService } from '../services';
 
 interface PaymentPanelProps {
   onPaymentSubmit: (paymentData: PaymentData) => void;
-  onCancel: () => void;
   chitList?: ChitItem[];
   selectedCells?: number[];
+  selectWeek?: number[];
   onChangeValues?: (values: PaypanelChange) => void;
   alreadyBaseAmount?: () => boolean;
   currentUserId?: number; // Add current user ID prop
+  maxSelection: number;
 }
 
 const PaymentPanel: React.FC<PaymentPanelProps> = ({ 
   onPaymentSubmit, 
-  onCancel,
   chitList = [], // Default to empty array if not provided
   selectedCells = [], // Default to empty array if not provided
+  selectWeek = [], // Default to empty array if not provided
   onChangeValues,
   alreadyBaseAmount,
-  currentUserId = 1 // Default to user ID 1 if not provided
+  currentUserId = 1, // Default to user ID 1 if not provided
+  maxSelection
 }) => {
   // State for form fields
   const [selectedChit, setSelectedChit] = useState<string>('');
@@ -51,6 +53,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showBaseAmountNoValidation, setShowBaseAmountNoValidation] = useState<boolean>(false);
   const [isCreatingChit, setIsCreatingChit] = useState<boolean>(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [notification, setNotification] = useState<{show: boolean, message: string}>({
     show: false,
     message: ''
@@ -92,11 +95,11 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   // Auto-select the chit if there's only one in the list
   useEffect(() => {
     // Only set payAmount if baseAmount is a valid number
-    if (!isNaN(baseAmount)) {
-      setPayAmount(baseAmount);
-    } else {
-      setPayAmount(200); // Default to 200 if baseAmount is NaN
-    }
+    // if (!isNaN(baseAmount)) {
+    //   setPayAmount(baseAmount);
+    // } else {
+    //   setPayAmount(200); // Default to 200 if baseAmount is NaN
+    // }
     
     
       const updates: any = { weekSelection: 1 };
@@ -114,13 +117,13 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         
         updates.chitId = chitId;
       }
-      console.log(selectedCells);
-      if (selectedCells?.length > 0 && payAmount !== baseAmount * selectedCells.length) {
-        // setPayAmount(baseAmount * selectedCells.length);
+      const filterWeek = selectedCells.filter( cells => !selectWeek.includes(cells));
+      if (selectedCells?.length > 0 && filterWeek.length > 0 && payAmount !== baseAmount * selectedCells.length) {
+        setPayAmount(baseAmount * filterWeek.length);
       }
       // Notify parent of changes
         notifyChanges(updates);
-  }, [baseAmount, chitList, selectedChit]);
+  }, [baseAmount, chitList, selectedChit, selectedCells]);
 
   // Handle chit selection change
   const handleChitChange = (event: SelectChangeEvent) => {
@@ -294,9 +297,13 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       return;
     }
     
+    const newWeekSelection = value / baseAmount;
+    if (newWeekSelection > maxSelection) {
+      setError(`Maximum ${maxSelection} weeks allowed`);
+      return;
+    }
     // Valid amount
     setPayAmount(value);
-    const newWeekSelection = value / baseAmount;
     setWeekSelection(newWeekSelection);
     notifyChanges({ 
       payAmount: value,
@@ -334,6 +341,13 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       weekSelection: weeks
     });
   };
+
+  const onReset = () => {
+    setPayAmount(baseAmount);
+    setWeekSelection(1);
+    setError(null);
+    notifyChanges({ payAmount: baseAmount, weekSelection: 1 });
+  }
 
   return (
     <Paper elevation={3} sx={{ p: 3, width: '100%', maxWidth: 400 }}>
@@ -439,16 +453,15 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             disabled={error !== null}
           >
             Pay Now
-          </Button>)}
-          
-          {/* <Button
+          </Button>)}          
+          <Button
             variant="outlined"
             color="secondary"
             startIcon={<CancelIcon />}
-            onClick={onCancel}
+            onClick={onReset}
           >
-            Cancel
-          </Button> */}
+            Reset
+          </Button>
         </Box>
       </Stack>
     </Paper>

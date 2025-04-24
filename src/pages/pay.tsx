@@ -33,7 +33,6 @@ import QRCodeComponent from '../components/QRCodeComponent';
 import { useAuth, useData, useDynamicApiStore } from '../context';
 import {PaymentService, ApiService} from '../services';
 import { CellData, ChitItem, PaymentData, PaymentFormData, PaymentMethod } from '../utils/interface-utils';
-import { match } from 'assert';
 
 interface CellSelectionProps {
   navigate?: (path: string) => void;
@@ -45,6 +44,8 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     // const { store } = useData();
   // State for selected cells
   const [selectedCells, setSelectedCells] = useState<number[]>([]);
+
+  const [selectWeek, setSelectWeek] = useState<number[]>([]);
 
   // State for disabled cells (example: already taken by others)
   const [disabledCells, setDisabledCells] = useState<number[]>([]);
@@ -109,8 +110,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         }
       }
     }
-    console.log(selectedCells)
-  }, [store, chitUsersData, isLoading, error]);
+  }, [store, chitUsersData, isLoading, error, disabledCells]);
   
   // Define the chit list item type
   interface ChitListItem {
@@ -180,28 +180,34 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     });
   };
 
-  const handleConfirmSelection = () => {
-    if (selectedCells.length === 0) {
-      setNotification({
-        open: true,
-        message: 'Please select at least one week',
-        severity: 'warning'
-      });
-      return;
-    }
+  useEffect(() => { 
+    const paidCellsWeek = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
+    setSelectWeek(paidCellsWeek)
+    setSelectedCells(selectedCells);
+  }, [selectedCells, paidCells]);
 
-    // Calculate default amount based on number of selected cells (e.g., 200 per cell)
-    const calculatedAmount = Math.max(200, selectedCells.length * 200);
+  // const handleConfirmSelection = () => {
+  //   if (selectedCells.length === 0) {
+  //     setNotification({
+  //       open: true,
+  //       message: 'Please select at least one week',
+  //       severity: 'warning'
+  //     });
+  //     return;
+  //   }
 
-    // Update payment data with calculated amount
-    setPaymentData(prev => ({
-      ...prev,
-      amount: calculatedAmount
-    }));
+  //   // Calculate default amount based on number of selected cells (e.g., 200 per cell)
+  //   const calculatedAmount = Math.max(200, selectedCells.length * 200);
 
-    // Open payment modal
-    setPaymentModalOpen(true);
-  };
+  //   // Update payment data with calculated amount
+  //   setPaymentData(prev => ({
+  //     ...prev,
+  //     amount: calculatedAmount
+  //   }));
+
+  //   // Open payment modal
+  //   setPaymentModalOpen(true);
+  // };
 
   // Handle payment modal close
   const handlePaymentModalClose = () => {
@@ -386,14 +392,14 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   };
   
   // Handle payment panel cancel
-  const handlePaymentCancel = () => {
-    // Show notification
-    setNotification({
-      open: true,
-      message: 'Payment cancelled',
-      severity: 'info'
-    });
-  };
+  // const handlePaymentCancel = () => {
+  //   // Show notification
+  //   setNotification({
+  //     open: true,
+  //     message: 'Payment cancelled',
+  //     severity: 'info'
+  //   });
+  // };
   
   // Create refs to track API call state and cache results
   const lastFetchedChitIdRef = useRef<string | null>(null);
@@ -485,12 +491,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   }, []);
   
   // Function to clear the cache if needed
-  const clearPaymentDetailsCache = useCallback(() => {
-    lastFetchedChitIdRef.current = null;
-    lastFetchTimeRef.current = 0;
-    cachedResultsRef.current = {};
-    console.log('Payment details cache cleared');
-  }, []);
+  // const clearPaymentDetailsCache = useCallback(() => {
+  //   lastFetchedChitIdRef.current = null;
+  //   lastFetchTimeRef.current = 0;
+  //   cachedResultsRef.current = {};
+  //   console.log('Payment details cache cleared');
+  // }, []);
 
   // Handle payment panel value changes
   const handlePaymentValuesChange = (values: {
@@ -560,11 +566,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
           ) : (
             <PaymentPanel 
               onPaymentSubmit={handlePayModal}
-              onCancel={handlePaymentCancel}
               chitList={chitList}
               selectedCells={selectedCells}
               onChangeValues={handlePaymentValuesChange}
               alreadyBaseAmount={handleDisableBaseAmount}
+              selectWeek={selectWeek}
+              maxSelection={MAX_SELECTIONS}
             />
           )}
         </Box>
