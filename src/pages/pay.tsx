@@ -331,10 +331,10 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         const allPaymentsResponse = await ApiService.get(`/payments/transaction/${transactionId.split('-')[0]}`);
         
         if (allPaymentsResponse.data && allPaymentsResponse.data.length > 0) {
-          console.log('All payments for this transaction:', allPaymentsResponse.data);
+          // console.log('All payments for this transaction:', allPaymentsResponse.data);
         }
       } catch (error) {
-        console.error('Error fetching all payments for transaction:', error);
+        // console.error('Error fetching all payments for transaction:', error);
       }
 
       // Clear selected cells after successful payment
@@ -349,7 +349,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // In a real app, you might navigate to another page after successful payment
       // if (navigate) navigate('/dashboard');
     } catch (error) {
-      console.error('Payment error:', error);
+      // console.error('Payment error:', error);
 
       // Show error notification
       setNotification({
@@ -413,7 +413,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     
     // Skip if already fetching the same chit
     if (isFetchingRef.current && lastFetchedChitIdRef.current === chitId) {
-      console.log('Skipping duplicate fetch request for chit:', chitId);
+      // console.log('Skipping duplicate fetch request for chit:', chitId);
       return;
     }
     
@@ -428,7 +428,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       cachedResultsRef.current[chitId] && 
       cacheAge < CACHE_TTL
     ) {
-      console.log('Using cached results for chit:', chitId);
+      // console.log('Using cached results for chit:', chitId);
       setPaidCells(cachedResultsRef.current[chitId]);
       
       // Update disabled cells from cache
@@ -444,7 +444,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     lastFetchedChitIdRef.current = chitId;
     
     try {
-      console.log('Fetching payment details for chit:', chitId);
+      // console.log('Fetching payment details for chit:', chitId);
       const response = await PaymentService.getChitPaymentDetails(chitId);
       
       if (response.data) {
@@ -462,7 +462,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         setDisabledCells(newDisabledCells);
       }
     } catch (error) {
-      console.error('Error fetching chit payment details:', error);
+      // console.error('Error fetching chit payment details:', error);
       setNotification({
         open: true,
         message: `Failed to load payment details: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -689,6 +689,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               label="Amount (₹)"
               name="amount"
               type="number"
+              disabled
               value={paymentData.amount}
               onChange={handlePaymentInputChange}
               InputProps={{

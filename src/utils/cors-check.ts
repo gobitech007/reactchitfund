@@ -12,7 +12,7 @@ import { getApiUrl } from './env-utils';
  */
 export const performCorsCheck = async (): Promise<void> => {
   try {
-    console.log('🔍 Checking CORS configuration...');
+    // console.log('🔍 Checking CORS configuration...');
     const corsWorking = await checkCorsSetup();
     
     if (corsWorking) {

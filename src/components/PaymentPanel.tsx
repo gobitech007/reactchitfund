@@ -253,7 +253,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           setIsFieldVisible(false);
         }
       } catch (error) {
-        console.error('Error creating new chit:', error);
+        // console.error('Error creating new chit:', error);
         setError('Failed to create new chit. Please try again.'+ error);
       } finally {
         setIsCreatingChit(false);
