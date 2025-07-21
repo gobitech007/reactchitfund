@@ -89,41 +89,41 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         weekSelection: updates.weekSelection !== undefined ? updates.weekSelection : weekSelection
       });
     }
-  }, [onChangeValues, chitList, selectedChit, baseAmount, payAmount, weekSelection]);
+  // Only include onChangeValues in the dependency array to prevent unnecessary recreations
+  }, [onChangeValues]);
   
   // Update pay amount when base amount changes
   // Auto-select the chit if there's only one in the list
   useEffect(() => {
-    // Only set payAmount if baseAmount is a valid number
-    // if (!isNaN(baseAmount)) {
-    //   setPayAmount(baseAmount);
-    // } else {
-    //   setPayAmount(200); // Default to 200 if baseAmount is NaN
-    // }
+    // Initialize updates object
+    const updates: any = { weekSelection: 1 };
     
+    // Only run this effect when chitList changes
+    if (chitList?.length > 0 && !selectedChit) {
+      const chitId = chitList[0].chit_no;
+      setSelectedChit(chitId);
+      updates.chitId = chitId;
+    }
     
-      const updates: any = { weekSelection: 1 };
-      
-      if (chitList?.length > 0) {
-        const chitId = selectedChit ? selectedChit : chitList[0].chit_no;
-        setSelectedChit(chitId);
-        
-        // Ensure baseAmount is a valid number
-        if (!isNaN(baseAmount)) {
-          setBaseAmount(baseAmount);
-        } else {
-          setBaseAmount(200); // Default to 200 if baseAmount is NaN
+    // Notify parent of changes only if we have updates
+    if (Object.keys(updates).length > 1) {
+      notifyChanges(updates);
+    }
+  }, [chitList, selectedChit, notifyChanges]);
+  
+  // Handle selected cells changes separately
+  useEffect(() => {
+    if (selectedCells?.length > 0) {
+      const filterWeek = selectedCells.filter(cells => !selectWeek.includes(cells));
+      if (filterWeek.length > 0) {
+        const calculatedAmount = baseAmount * filterWeek.length;
+        if (payAmount !== calculatedAmount) {
+          setPayAmount(calculatedAmount);
+          notifyChanges({ payAmount: calculatedAmount });
         }
-        
-        updates.chitId = chitId;
       }
-      const filterWeek = selectedCells.filter( cells => !selectWeek.includes(cells));
-      if (selectedCells?.length > 0 && filterWeek.length > 0 && payAmount !== baseAmount * selectedCells.length) {
-        setPayAmount(baseAmount * filterWeek.length);
-      }
-      // Notify parent of changes
-        notifyChanges(updates);
-  }, [baseAmount, chitList, selectedChit, selectedCells]);
+    }
+  }, [selectedCells, selectWeek, baseAmount, payAmount, notifyChanges]);
 
   // Handle chit selection change
   const handleChitChange = (event: SelectChangeEvent) => {
@@ -152,9 +152,11 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     if (showBaseAmountNoValidation) {
       // Even in no validation mode, ensure we don't set NaN
       if (isNaN(value)) {
-        setBaseAmount(200);
-        notifyChanges({ baseAmount: 200 });
-      } else {
+        if (baseAmount !== 200) {
+          setBaseAmount(200);
+          notifyChanges({ baseAmount: 200 });
+        }
+      } else if (value !== baseAmount) {
         setBaseAmount(value);
         notifyChanges({ baseAmount: value });
       }
@@ -166,46 +168,53 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     
     // If empty or not a number, set to minimum
     if (isNaN(value) || value < 0) {
-      setBaseAmount(200);
-      notifyChanges({ baseAmount: 200 });
+      if (baseAmount !== 200) {
+        setBaseAmount(200);
+        notifyChanges({ baseAmount: 200 });
+      }
       return;
     }
     
     // Validate for minimum amount
     if (value < 200 && value >= 0) {
-      setBaseAmount(value);
-      setError('Base amount must be at least ₹200');
-      notifyChanges({ baseAmount: value });
+      if (value !== baseAmount) {
+        setBaseAmount(value);
+        setError('Base amount must be at least ₹200');
+        notifyChanges({ baseAmount: value });
+      }
       return;
     }
     
     // Validate for hundreds (200, 300, 400, etc.)
     if (value % 100 !== 0 && value >= 200) {
       const roundedValue = Math.floor(value / 100) * 100;
-      setBaseAmount(roundedValue);
-      setError('Base amount must be in hundreds (200, 300, 400, etc.)');
-      notifyChanges({ baseAmount: roundedValue });
+      if (roundedValue !== baseAmount) {
+        setBaseAmount(roundedValue);
+        setError('Base amount must be in hundreds (200, 300, 400, etc.)');
+        notifyChanges({ baseAmount: roundedValue });
+      }
       return;
     }
     
-    // Valid amount
-    setBaseAmount(value);
-    // If there's at least one chit in the list, update it
-    if (chitList.length > 0) {
-      chitList[0].amount = value.toString();
-      chitList[0].name = chitList[0].name?.split('₹')[0] + '₹' + value.toString();
-      const newChitId = chitList[0].chit_no;
-      setSelectedChit(newChitId); // Set to chit_no which is the correct identifier
-      notifyChanges({ baseAmount: value, chitId: newChitId });
-    } else {
-      notifyChanges({ baseAmount: value });
+    // Valid amount - only update if different from current value
+    if (value !== baseAmount) {
+      setBaseAmount(value);
+      
+      // If there's at least one chit in the list, update it
+      if (chitList.length > 0) {
+        // Don't mutate the original object
+        const newChitId = chitList[0].chit_no;
+        notifyChanges({ baseAmount: value, chitId: newChitId });
+      } else {
+        notifyChanges({ baseAmount: value });
+      }
+      setError(null);
     }
-    setError(null);
   };
   
   // Handle base amount blur event to create a new chit when in no validation mode
   const handleBaseAmountBlur = async () => {
-    if (showBaseAmountNoValidation && !isNaN(baseAmount) && baseAmount > 0) {
+    if (showBaseAmountNoValidation && !isNaN(baseAmount) && baseAmount > 0 && !isCreatingChit) {
       setIsCreatingChit(true);
       const newChitData: ChitListItem = {
         user_id: currentUserId,
@@ -226,16 +235,16 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             name: `Chit ${newChit.data.chit_no} - ₹${newChit.data.amount}`
           };
           
-          // Add the new chit to the chitList
-          chitList.push(newChitItem);
+          // Create a new array instead of mutating the existing one
+          const updatedChitList = [...chitList, newChitItem];
           
           // Select the new chit
           setSelectedChit(newChitItem.chit_no);
           
           // Notify parent of changes
           notifyChanges({ 
-            // chitId: newChit.chit_no,
-            // chitNo: newChit.chit_no,
+            chitId: newChitItem.chit_id,
+            chitNo: newChitItem.chit_no,
             baseAmount: baseAmount,
             payAmount: baseAmount,
             weekSelection: 1
@@ -248,8 +257,6 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           });
           
           // Turn off no validation mode
-          setIsCreatingChit(false);
-          setShowBaseAmountNoValidation(true);
           setIsFieldVisible(false);
         }
       } catch (error) {
@@ -276,24 +283,30 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     if (isNaN(value) || value < 0) {
       // Ensure baseAmount is also not NaN
       const safeBaseAmount = !isNaN(baseAmount) ? baseAmount : 200;
-      setPayAmount(safeBaseAmount);
-      notifyChanges({ payAmount: safeBaseAmount });
+      if (payAmount !== safeBaseAmount) {
+        setPayAmount(safeBaseAmount);
+        notifyChanges({ payAmount: safeBaseAmount });
+      }
       return;
     }
     
     // Validate for minimum amount (base amount)
     if (value < baseAmount) {
-      setPayAmount(value);
-      setError(`Pay amount must be at least ₹${baseAmount}`);
-      notifyChanges({ payAmount: value });
+      if (value !== payAmount) {
+        setPayAmount(value);
+        setError(`Pay amount must be at least ₹${baseAmount}`);
+        notifyChanges({ payAmount: value });
+      }
       return;
     }
     
     // Validate that pay amount is a multiple of base amount
     if (value % baseAmount !== 0) {
-      setPayAmount(value);
-      setError(`Pay amount must be in multiples of ₹${baseAmount}`);
-      notifyChanges({ payAmount: value });
+      if (value !== payAmount) {
+        setPayAmount(value);
+        setError(`Pay amount must be in multiples of ₹${baseAmount}`);
+        notifyChanges({ payAmount: value });
+      }
       return;
     }
     
@@ -302,14 +315,18 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       setError(`Maximum ${maxSelection} weeks allowed`);
       return;
     }
-    // Valid amount
-    setPayAmount(value);
-    setWeekSelection(newWeekSelection);
-    notifyChanges({ 
-      payAmount: value,
-      weekSelection: newWeekSelection
-    });
-    setError(null);
+    
+    // Only update if the value has changed
+    if (value !== payAmount) {
+      // Valid amount
+      setPayAmount(value);
+      setWeekSelection(newWeekSelection);
+      notifyChanges({ 
+        payAmount: value,
+        weekSelection: newWeekSelection
+      });
+      setError(null);
+    }
   };
 
   // Handle form submission

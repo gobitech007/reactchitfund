@@ -84,17 +84,16 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const [chitList, setChitList] = useState<ChitListItem[]>([]);
   
   
-  // Log the store and chitUsersData for debugging
+  // Process chitUsersData when it changes
   useEffect(() => {
-    setChitList(chitUsersData);
-    store.chitUsersLoading = false;
-    // Update chitList when API data is available
+    // Don't modify the store directly to avoid triggering re-renders
+    // Only update chitList if chitUsersData is valid and different from current chitList
     if (chitUsersData && Array.isArray(chitUsersData)) {
       // Type assertion for the API data
       const typedChitData = chitUsersData as Array<ChitItem>;
       
       const formattedChitList: ChitListItem[] = typedChitData.map(chit => ({
-        chit_no: chit.chit_no || chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
+        chit_no: chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
         name: `Weekly Chit ${chit.chit_no}- ₹${chit.amount || '200'}`,
         amount: `${chit.amount || '200'}`,
         chit_id: chit.chit_id,
@@ -102,15 +101,18 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       
       if (formattedChitList.length > 0) {
         setChitList(formattedChitList);
-        
-        // If there's only one chit, fetch its payment details automatically
-        if (formattedChitList.length === 1 && formattedChitList[0].chit_id && disabledCells.length === 0) {
-          // Use cached data if available
-          fetchChitPaymentDetailsRef.current(formattedChitList[0].chit_id, false);
-        }
       }
     }
-  }, [store, chitUsersData, isLoading, error, disabledCells]);
+  }, [chitUsersData]);
+  
+  // Handle fetching payment details when chitList or disabledCells change
+  useEffect(() => {
+    // If there's only one chit, fetch its payment details automatically
+    if (chitList.length === 1 && chitList[0].chit_id && disabledCells.length === 0) {
+      // Use cached data if available
+      fetchChitPaymentDetailsRef.current(chitList[0].chit_id, false);
+    }
+  }, [chitList, disabledCells]);
   
   // Define the chit list item type
   interface ChitListItem {
@@ -182,9 +184,10 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
 
   useEffect(() => { 
     const paidCellsWeek = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
-    setSelectWeek(paidCellsWeek)
-    setSelectedCells(selectedCells);
-  }, [selectedCells, paidCells]);
+    setSelectWeek(paidCellsWeek);
+    // Remove the setSelectedCells(selectedCells) line as it causes an infinite loop
+    // by updating the state with the same value that's in the dependency array
+  }, [paidCells]);
 
   // const handleConfirmSelection = () => {
   //   if (selectedCells.length === 0) {
@@ -260,11 +263,14 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // If no weeks are selected, default to the first week
       const weeksToProcess = selectedCells.length > 0 ? selectedCells : paidCells ? [] : [1];
       
+      const paidWeeks = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
+      const filterWeek = selectedCells.filter( cells => !paidWeeks.includes(cells));
+
       // Calculate amount per week
-      const amountPerWeek = Math.floor(paymentData.amount / weeksToProcess.length);
+      const amountPerWeek = Math.floor(paymentData.amount / filterWeek.length);
       
       // Process payments for all selected weeks
-      const paymentPromises = weeksToProcess.map(async (week) => {
+      const paymentPromises = filterWeek.map(async (week) => {
         // Prepare backend payment request data for this week
         const backendPayload = {
           user_id: currentUser.user_id,
@@ -510,7 +516,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       return; 
     } 
     // Fetch payment details when chit ID changes
-    if (values.chitId && values.baseAmount.toString().length >= 2 && disabledCells.length === 0) {
+    if (values.chitId && values.baseAmount.toString().length >= 2) {
       fetchChitPaymentDetails(values.chitId);
     }
     
