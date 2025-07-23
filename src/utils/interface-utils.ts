@@ -13,6 +13,7 @@ export interface ChitListItem {
     chit_no: number;
     amount: number;
     chit_id?: string;
+    id: string
 }
 
 export interface PaypanelChange {
@@ -91,6 +92,8 @@ export interface CellProps extends PaperProps {
     transaction_id: string; // Required transaction ID
     createdAt: string;
     updatedAt: string;
+    mobileNumber?: string; // Add this property
+    date: Date;
   }
   
   // Saved payment method interface

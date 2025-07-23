@@ -4,21 +4,18 @@ import React from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../components/LanguageSelector';
+import ThemeToggle from '../components/ThemeToggle';
 import '../i18n';
 import logo from '../assets/images/SM_LOGO.webp';
 import routes from '../route';
-import { useAuth } from '../context/AuthContext';
+import { useAppSelector, useAppDispatch } from '../redux/hooks';
+import { logout } from '../redux/slices/authSlice';
 
 function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { logout, isAuthenticated, currentUser, login } = useAuth();
-  // Make login function available globally for class components
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.login = login;
-    }
-  }, [login]);
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, currentUser } = useAppSelector(state => state.auth);
 
   // private getRoutes = getLinks;
   const getLinks = (getRoutes) => {
@@ -26,13 +23,13 @@ function Header() {
       if (route.collapse) {
         return getLinks(route.collapse);
       }
-      if (route.route && route.canView && isAuthenticated()) {
+      if (route.route && route.canView && isAuthenticated) {
         return (
           <li className="nav-item" key={route.key}>
             <Link className="nav-link text-info" to={route.route}>{route.name}</Link>
           </li>
         );
-      } else if ((route.key === 'login' || route.key === 'register') && !isAuthenticated()) {
+      } else if ((route.key === 'login' || route.key === 'register') && !isAuthenticated) {
         return (
           <li className="nav-item" key={route.key}>
             <Link className="nav-link text-info" to={route.route}>{route.name}</Link>
@@ -44,8 +41,8 @@ function Header() {
 }
 
   const handleLogout = () => {
-    // Call the logout function from the auth context
-    logout();
+    // Dispatch logout action
+    dispatch(logout());
     console.log('User logged out');
 
     // Use React Router's navigate function to redirect to login page
@@ -71,7 +68,10 @@ function Header() {
               <span className="navbar-text text-white text-start me-3">
                 <LanguageSelector />
               </span>
-              {isAuthenticated() && (
+              <span className="navbar-text text-white text-start me-3">
+                <ThemeToggle />
+              </span>
+              {isAuthenticated && (
                 <div className="d-flex align-items-center">
                   <span className="navbar-text text-white me-3">
                     {currentUser?.fullname}

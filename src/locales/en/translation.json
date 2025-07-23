@@ -24,7 +24,22 @@
     "transactions": "Transactions",
     "profile": "Profile",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "pay":"Pay",
+    "register": "Register",
+    "login": "Login",
+    "forgotPassword": "Forgot Password",
+    "changeLanguage": "Change Language",
+    "themeMode": "Theme Mode",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode",
+    "rtlLayout": "RTL Layout",
+    "ltrLayout": "LTR Layout"
+  },
+  "footer": {
+    "copyrightText": "&copy; {year} SM Chit Fund with Snacks. All rights reserved."
   },
   "header": {
     "brand": "SM Chit Fund with Snacks",
@@ -44,23 +59,6 @@
     "totalCompletedTransactions": "Total completed transactions",
     "summary": "Summary",
     "welcomeMessage": "Welcome to the SMC Chit Fund dashboard. Here you can see an overview of your system's performance."
-  },
-  "transactionHistory": {
-    "title": "Transaction History",
-    "noTransactions": "No transactions found",
-    "columns": {
-      "transactionId": "Transaction ID",
-      "date": "Date",
-      "amount": "Amount (₹)",
-      "mobileNumber": "Mobile Number",
-      "status": "Status"
-    },
-    "status": {
-      "completed": "Completed",
-      "pending": "Pending",
-      "failed": "Failed"
-    },
-    "rowsPerPage": "Rows per page:"
   },
   "auth": {
     "login": "Login",

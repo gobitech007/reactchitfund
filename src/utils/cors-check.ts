@@ -33,6 +33,10 @@ export const performCorsCheck = async (): Promise<void> => {
   }
 };
 
-export default {
+// Create a named constant for the export object
+const corsUtils = {
   performCorsCheck
 };
+
+// Export the named constant as default
+export default corsUtils;

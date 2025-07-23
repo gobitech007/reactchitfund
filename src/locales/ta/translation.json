@@ -12,7 +12,11 @@
     "back": "பின்னால்",
     "next": "அடுத்து",
     "previous": "முந்தைய",
-    "optional": "விருப்பத்திற்குரிய"
+    "optional": "விருப்பத்திற்குரிய",
+    "error": "பிழை",
+    "retry": "மீண்டும் முயற்சி செய்",
+    "view": "பார்",
+    "close": "மூடு"
   },
   "navigation": {
     "home": "முகப்பு",
@@ -20,10 +24,25 @@
     "transactions": "பரிவர்த்தனைகள்",
     "profile": "சுயவிவரம்",
     "settings": "அமைப்புகள்",
-    "logout": "வெளியேறு"
+    "logout": "வெளியேறு",
+    "signIn": "உள்நுழை",
+    "signUp": "பதிவு செய்",
+    "pay": "செலுத்து",
+    "register": "பதிவு செய்",
+    "login": "உள்நுழைவு",
+    "forgotPassword": "கடவுச்சொல் மறந்துவிட்டதா",
+    "changeLanguage": "மொழியை மாற்று",
+    "themeMode": "தீம் மோட்",
+    "lightMode": "ஒளி மோட்",
+    "darkMode": "இருள் மோட்",
+    "rtlLayout": "RTL அமைப்பு",
+    "ltrLayout": "LTR அமைப்பு"
+  },
+  "footer": {
+    "copyrightText": "&copy; {year} SM சிட் ஃபண்ட் உணவுகளுடன். அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை."
   },
   "header": {
-    "brand": "எஸ்எம் சிட் ஃபண்ட் உணவுகளுடன்",
+    "brand": "SM சிட் ஃபண்ட் உணவுகளுடன்",
     "dashboard": "டாஷ்போர்டு",
     "pay": "செலுத்து",
     "transaction": "பரிவர்த்தனை",
@@ -41,32 +60,17 @@
     "summary": "சுருக்கம்",
     "welcomeMessage": "SMC சிட் ஃபண்ட் டாஷ்போர்டுக்கு வரவேற்கிறோம். இங்கே உங்கள் அமைப்பின் செயல்திறன் பற்றிய கண்ணோட்டத்தைக் காணலாம்."
   },
-  "transactionHistory": {
-    "title": "பரிவர்த்தனை வரலாறு",
-    "noTransactions": "பரிவர்த்தனைகள் எதுவும் கிடைக்கவில்லை",
-    "columns": {
-      "transactionId": "பரிவர்த்தனை ஐடி",
-      "date": "தேதி",
-      "amount": "தொகை (₹)",
-      "mobileNumber": "மொபைல் எண்",
-      "status": "நிலை"
-    },
-    "status": {
-      "completed": "முடிந்தது",
-      "pending": "நிலுவையில்",
-      "failed": "தோல்வி"
-    },
-    "rowsPerPage": "ஒரு பக்கத்திற்கு வரிசைகள்:"
-  },
   "auth": {
     "login": "உள்நுழைக",
     "register": "பதிவு செய்க",
     "forgotPassword": "கடவுச்சொல் மறந்துவிட்டதா?",
     "email": "மின்னஞ்சல்",
     "password": "கடவுச்சொல்",
+    "pin": "பின்",
     "confirmPassword": "கடவுச்சொல் உறுதிப்படுத்து",
     "fullName": "முழு பெயர்",
     "mobileNumber": "மொபைல் எண்",
+    "phone": "தொலைபேசி எண்",
     "dateOfBirth": "பிறந்த தேதி",
     "aadharNumber": "ஆதார் எண்",
     "loginForm": "உள்நுழைவு",
@@ -109,7 +113,6 @@
   "language": {
     "english": "ஆங்கிலம்",
     "hindi": "இந்தி",
-    "marathi": "மராத்தி",
     "tamil": "தமிழ்",
     "selectLanguage": "மொழியைத் தேர்ந்தெடுக்கவும்"
   },
@@ -118,5 +121,32 @@
     "month": "மாதம்",
     "day": "நாள்",
     "format": "வடிவம்"
+  },
+  "transactionHistory": {
+    "title": "பரிவர்த்தனை வரலாறு",
+    "noTransactions": "பரிவர்த்தனைகள் எதுவும் கிடைக்கவில்லை",
+    "rowsPerPage": "ஒரு பக்கத்திற்கு வரிசைகள்",
+    "chitNo": "சிட் எண்",
+    "week": "வாரம்",
+    "columns": {
+      "transactionId": "பரிவர்த்தனை ஐடி",
+      "chitInfo": "சிட் தகவல்",
+      "date": "தேதி",
+      "amount": "தொகை",
+      "mobileNumber": "மொபைல் எண்",
+      "paymentMethod": "பணம் செலுத்தும் முறை",
+      "status": "நிலை"
+    },
+    "status": {
+      "completed": "முடிந்தது",
+      "pending": "நிலுவையில்",
+      "failed": "தோல்வி"
+    },
+    "paymentMethod": {
+      "card": "கார்டு",
+      "UPI": "யூபிஐ",
+      "netbanking": "நெட் பேங்கிங்",
+      "cash": "பணம்"
+    }
   }
 }

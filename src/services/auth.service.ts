@@ -7,6 +7,9 @@ import tokenService from './token.service';
 
 // User interfaces
 export interface User {
+  address: string;
+  fullname: string;
+  phone: string;
   id: string;
   fullName: string;
   email: string;
@@ -15,6 +18,16 @@ export interface User {
   aadharNumber?: string;
   createdAt?: string;
   updatedAt?: string;
+   notifications?: {
+    email?: boolean;
+    push?: boolean;
+    sms?: boolean;
+    inApp?: boolean;
+  };
+  privacy?: {
+    shareData?: boolean;
+    showActivity?: boolean;
+  };
 }
 
 // Login request payload
@@ -52,7 +65,7 @@ export interface PasswordResetRequest {
 export interface PasswordUpdateRequest {
   token: string;
   password: string;
-  confirmPassword: string;
+  confirmPassword?: string;
 }
 
 /**

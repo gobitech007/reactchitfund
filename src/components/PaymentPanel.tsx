@@ -216,7 +216,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   const handleBaseAmountBlur = async () => {
     if (showBaseAmountNoValidation && !isNaN(baseAmount) && baseAmount > 0 && !isCreatingChit) {
       setIsCreatingChit(true);
-      const newChitData: ChitListItem = {
+      const newChitData: Partial<ChitListItem> = {
         user_id: currentUserId,
         amount: baseAmount,
         chit_no: (chitList.length + 1)
@@ -372,7 +372,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         <Typography variant="h6" component="h2" gutterBottom sx={{ mr: 1 }}>
           Payment Details
         </Typography>
-        <Tooltip title="Create new chit">
+        <Tooltip title="Creat new chit">
           <IconButton 
             color={showBaseAmountNoValidation ? "primary" : "default"} 
             onClick={toggleBaseAmountNoValidation}

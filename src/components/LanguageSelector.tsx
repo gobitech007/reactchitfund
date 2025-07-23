@@ -11,15 +11,13 @@ import {
 import TranslateIcon from '@mui/icons-material/Translate';
 import CheckIcon from '@mui/icons-material/Check';
 import { useTranslation } from 'react-i18next';
-
-const languages = [
-  { code: 'ta', name: 'தமிழ்' },
-  { code: 'en', name: 'English' },
-  { code: 'hi', name: 'हिंदी' }
-];
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { changeLanguage } from '../redux/slices/languageSlice';
 
 const LanguageSelector: React.FC = () => {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
+  const dispatch = useAppDispatch();
+  const { currentLanguage, availableLanguages } = useAppSelector(state => state.language);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -31,12 +29,12 @@ const LanguageSelector: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const changeLanguage = (languageCode: string) => {
-    i18n.changeLanguage(languageCode);
+  const handleChangeLanguage = (languageCode: string) => {
+    dispatch(changeLanguage(languageCode));
     handleClose();
   };
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const currentLang = availableLanguages.find(lang => lang.code === currentLanguage) || availableLanguages[0];
 
   return (
     <Box>
@@ -48,7 +46,7 @@ const LanguageSelector: React.FC = () => {
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
       >
-        <Typography variant="body2">{currentLanguage.name}</Typography>
+        <Typography variant="body2">{currentLang.name}</Typography>
       </Button>
       <Menu
         id="language-menu"
@@ -62,14 +60,14 @@ const LanguageSelector: React.FC = () => {
         <MenuItem disabled>
           <Typography variant="subtitle2">{t('language.selectLanguage')}</Typography>
         </MenuItem>
-        {languages.map((language) => (
+        {availableLanguages.map((language) => (
           <MenuItem 
             key={language.code} 
-            onClick={() => changeLanguage(language.code)}
-            selected={i18n.language === language.code}
+            onClick={() => handleChangeLanguage(language.code)}
+            selected={currentLanguage === language.code}
           >
             <ListItemIcon>
-              {i18n.language === language.code && <CheckIcon fontSize="small" />}
+              {currentLanguage === language.code && <CheckIcon fontSize="small" />}
             </ListItemIcon>
             <ListItemText>
               {language.name} ({t(`language.${language.code === 'en' ? 'english' : language.code === 'hi' ? 'hindi' : 'tamil'}`).toString()})

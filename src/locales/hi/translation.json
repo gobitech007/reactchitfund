@@ -24,10 +24,25 @@
     "transactions": "लेनदेन",
     "profile": "प्रोफाइल",
     "settings": "सेटिंग्स",
-    "logout": "लॉगआउट"
+    "logout": "लॉगआउट",
+    "signIn": "साइन इन",
+    "signUp": "साइन अप",
+    "pay": "भुगतान",
+    "register": "पंजीकरण",
+    "login": "लॉगिन",
+    "forgotPassword": "पासवर्ड भूल गए",
+    "changeLanguage": "भाषा बदलें",
+    "themeMode": "थीम मोड",
+    "lightMode": "लाइट मोड",
+    "darkMode": "डार्क मोड",
+    "rtlLayout": "RTL लेआउट",
+    "ltrLayout": "LTR लेआउट"
+  },
+  "footer": {
+    "copyrightText": "&copy; {year} SM चिट फंड विथ स्नैक्स। सभी अधिकार सुरक्षित।"
   },
   "header": {
-    "brand": "एसएम चिट फंड",
+    "brand": "SM चिट फंड विथ स्नैक्स",
     "dashboard": "डैशबोर्ड",
     "pay": "भुगतान",
     "transaction": "लेनदेन",
@@ -45,32 +60,17 @@
     "summary": "सारांश",
     "welcomeMessage": "SMC चिट फंड डैशबोर्ड में आपका स्वागत है। यहां आप अपने सिस्टम के प्रदर्शन का अवलोकन देख सकते हैं।"
   },
-  "transactionHistory": {
-    "title": "लेनदेन इतिहास",
-    "noTransactions": "कोई लेनदेन नहीं मिला",
-    "columns": {
-      "transactionId": "लेनदेन आईडी",
-      "date": "तारीख",
-      "amount": "राशि (₹)",
-      "mobileNumber": "मोबाइल नंबर",
-      "status": "स्थिति"
-    },
-    "status": {
-      "completed": "पूर्ण",
-      "pending": "अपूर्ण",
-      "failed": "विफल"
-    },
-    "rowsPerPage": "प्रति पृष्ठ पंक्तियाँ:"
-  },
   "auth": {
     "login": "लॉगिन",
     "register": "रजिस्टर",
     "forgotPassword": "पासवर्ड भूल गए?",
     "email": "ईमेल",
     "password": "पासवर्ड",
+    "pin": "पिन",
     "confirmPassword": "पासवर्ड की पुष्टि करें",
     "fullName": "पूरा नाम",
     "mobileNumber": "मोबाइल नंबर",
+    "phone": "फोन नंबर",
     "dateOfBirth": "जन्म तिथि",
     "aadharNumber": "आधार नंबर",
     "loginForm": "लॉगिन",
@@ -113,7 +113,6 @@
   "language": {
     "english": "अंग्रेज़ी",
     "hindi": "हिंदी",
-    "marathi": "मराठी",
     "tamil": "तमिल",
     "selectLanguage": "भाषा चुनें"
   },

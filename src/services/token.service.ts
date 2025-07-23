@@ -3,7 +3,6 @@
  * Handles JWT token management, including automatic token refresh
  */
 
-import { AuthService } from './auth.service';
 import ApiService from './api.service';
 
 // JWT token structure (partial)

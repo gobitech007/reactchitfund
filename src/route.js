@@ -1,11 +1,13 @@
 import Icon from "@mui/material/Icon";
 
-import Dashboard from "./pages/dashboard";
-import Pay from "./pages/pay";
-import TransactionHistory from "./pages/transactionhistory";
-import Register from './pages/register';
-import Login from './pages/login';
-import ForgotPassword from './pages/forgot-password';
+import Dashboard from "./pages/dashboard-redux";
+import Pay from "./pages/pay-redux";
+import TransactionHistory from "./pages/transactionhistory-redux";
+import Register from './pages/register-redux';
+import Login from './pages/login-redux';
+import ForgotPassword from './pages/forgot-password-redux';
+import Profile from './pages/profile-redux';
+import Settings from './pages/settings-redux';
 
 const routes = [
     {
@@ -33,6 +35,24 @@ const routes = [
       icon: <Icon fontSize="small">history</Icon>,
       route: "/transactionhistory",
       element: <TransactionHistory />,
+      canView: true,
+    },
+    {
+      type: "collapse",
+      name: "Profile",
+      key: "profile",
+      icon: <Icon fontSize="small">person</Icon>,
+      route: "/profile",
+      element: <Profile />,
+      canView: true,
+    },
+    {
+      type: "collapse",
+      name: "Settings",
+      key: "settings",
+      icon: <Icon fontSize="small">settings</Icon>,
+      route: "/settings",
+      element: <Settings />,
       canView: true,
     },
     {

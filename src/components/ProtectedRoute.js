@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAppSelector } from '../redux/hooks';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, currentUser, loading } = useAuth();
+  const { isAuthenticated, currentUser, loading } = useAppSelector(state => state.auth);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ const ProtectedRoute = () => {
   }
 
   // If the user is not authenticated, redirect to the login page
-  if (!isAuthenticated() || !currentUser) {
+  if (!isAuthenticated || !currentUser) {
     return <Navigate to="/login" replace />;
   }
 
