@@ -27,6 +27,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CellGrid from '../components/CellGrid';
 import PaymentPanel from '../components/PaymentPanel';
+import PaymentMethods from '../components/PaymentMethods';
 import { withNavigation } from '../utils/withNavigation';
 import { getCurrentWeekWithOrdinal, getCurrentMonthName } from '../utils/date-utils';
 import QRCodeComponent from '../components/QRCodeComponent';
@@ -70,6 +71,9 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     amount: 200,
     paymentMethod: 'credit_card',
   });
+
+  // State for payment validation errors
+  const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({});
 
   // State for available chit list
   
@@ -228,8 +232,89 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     }));
   };
 
+  // Handle payment data changes from PaymentMethods component
+  const handlePaymentDataChange = (newPaymentData: PaymentFormData) => {
+    setPaymentData(newPaymentData);
+    // Clear errors when data changes
+    setPaymentErrors({});
+  };
+
+  // Validate payment data
+  const validatePaymentData = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (paymentData.paymentMethod === 'credit_card' || paymentData.paymentMethod === 'debit_card') {
+      if (!paymentData.cardNumber) {
+        errors.cardNumber = 'Card number is required';
+      } else {
+        const cleanCardNumber = paymentData.cardNumber.replace(/\D/g, '');
+        if (cleanCardNumber.length !== 16) {
+          errors.cardNumber = 'Card number must be exactly 16 digits';
+        }
+      }
+
+      if (!paymentData.cardName) {
+        errors.cardName = 'Name on card is required';
+      }
+
+      if (!paymentData.expiryDate) {
+        errors.expiryDate = 'Expiry date is required';
+      } else {
+        const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+        if (!expiryRegex.test(paymentData.expiryDate)) {
+          errors.expiryDate = 'Expiry date must be in MM/YY format';
+        } else {
+          const [month, year] = paymentData.expiryDate.split('/');
+          const currentDate = new Date();
+          const currentYear = currentDate.getFullYear() % 100;
+          const currentMonth = currentDate.getMonth() + 1;
+          
+          const expMonth = parseInt(month, 10);
+          const expYear = parseInt(year, 10);
+          
+          if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+            errors.expiryDate = 'Card has expired. Please enter a future date';
+          }
+        }
+      }
+
+      if (!paymentData.cvv) {
+        errors.cvv = 'CVV is required';
+      } else {
+        const cvvRegex = /^[0-9]{3,4}$/;
+        if (!cvvRegex.test(paymentData.cvv)) {
+          errors.cvv = 'CVV must be 3 or 4 digits';
+        }
+      }
+    }
+
+    if (paymentData.paymentMethod === 'upi') {
+      if (!paymentData.upiId) {
+        errors.upiId = 'UPI ID is required';
+      } else {
+        const upiRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$/;
+        if (!upiRegex.test(paymentData.upiId)) {
+          errors.upiId = 'Please enter a valid UPI ID';
+        }
+      }
+    }
+
+    setPaymentErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Handle payment submission
   const handleFinalPaymentSubmit = async () => {
+    // Validate payment data first
+    if (!validatePaymentData()) {
+      setNotification({
+        open: true,
+        message: 'Please fix the validation errors before proceeding',
+        severity: 'error'
+      });
+      return;
+    }
+
     try {
       // Get the first chit from the list (assuming we're paying for the selected chit)
       const selectedChit = chitSelectId ? chitSelectId : chitList.length > 0 ? chitList[0].chit_no : null;
@@ -704,199 +789,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               sx={{ mb: 3 }}
             />
 
-            <FormControl component="fieldset" sx={{ mb: 3 }}>
-              <FormLabel component="legend">Payment Method</FormLabel>
-              <RadioGroup
-                aria-label="payment-method"
-                name="paymentMethod"
-                value={paymentData.paymentMethod}
-                onChange={handlePaymentMethodChange}
-              >
-                <FormControlLabel
-                  value="credit_card"
-                  control={<Radio />}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <CreditCardIcon sx={{ mr: 1 }} />
-                      <Typography>Credit Card</Typography>
-                    </Box>
-                  }
-                />
-                <FormControlLabel
-                  value="debit_card"
-                  control={<Radio />}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <PaymentIcon sx={{ mr: 1 }} />
-                      <Typography>Debit Card</Typography>
-                    </Box>
-                  }
-                />
-                <FormControlLabel
-                  value="upi"
-                  control={<Radio />}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <AccountBalanceIcon sx={{ mr: 1 }} />
-                      <Typography>UPI</Typography>
-                    </Box>
-                  }
-                />
-              </RadioGroup>
-            </FormControl>
-
-            {/* Credit Card or Debit Card Form Fields */}
-            {(paymentData.paymentMethod === 'credit_card' || paymentData.paymentMethod === 'debit_card') && (
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="cardNumber"
-                    label="Card Number"
-                    name="cardNumber"
-                    placeholder="1234 5678 9012 3456"
-                    value={paymentData.cardNumber || ''}
-                    onChange={handlePaymentInputChange}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="cardName"
-                    label="Name on Card"
-                    name="cardName"
-                    value={paymentData.cardName || ''}
-                    onChange={handlePaymentInputChange}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="expiryDate"
-                    label="Expiry Date"
-                    name="expiryDate"
-                    placeholder="MM/YY"
-                    value={paymentData.expiryDate || ''}
-                    onChange={handlePaymentInputChange}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="cvv"
-                    label="CVV"
-                    name="cvv"
-                    type="password"
-                    value={paymentData.cvv || ''}
-                    onChange={handlePaymentInputChange}
-                  />
-                </Grid>
-              </Grid>
-            )}
-
-            {/* UPI Form Fields */}
-            {paymentData.paymentMethod === 'upi' && (
-              <Box>
-                <TextField
-                  required
-                  fullWidth
-                  id="upiId"
-                  label="UPI ID"
-                  name="upiId"
-                  placeholder="yourname@upi"
-                  value={paymentData.upiId || ''}
-                  onChange={handlePaymentInputChange}
-                  helperText="Enter your UPI ID (e.g., yourname@upi)"
-                  sx={{ mb: 3 }}
-                />
-
-                {/* QR Code Display */}
-                <QRCodeComponent value={'55'} />
-                <Box
-                  sx={{
-                    mt: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    border: '1px solid #ddd',
-                    borderRadius: 1,
-                    p: 2
-                  }}
-                >
-                  <Typography variant="subtitle1" gutterBottom>
-                    Scan QR Code to Pay
-                  </Typography>
-
-                  {/* Placeholder for QR Code */}
-                  <Box
-                    sx={{
-                      width: 200,
-                      height: 200,
-                      bgcolor: '#f5f5f5',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      border: '1px solid #ddd',
-                      position: 'relative',
-                      my: 2
-                    }}
-                  >
-                    {/* QR Code Pattern (Simple Representation) */}
-                    <Box sx={{
-                      width: 160,
-                      height: 160,
-                      bgcolor: 'white',
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(8, 1fr)',
-                      gridTemplateRows: 'repeat(8, 1fr)',
-                      gap: '2px'
-                    }}>
-                      {Array.from({ length: 64 }).map((_, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            bgcolor: Math.random() > 0.5 ? 'black' : 'white',
-                            width: '100%',
-                            height: '100%'
-                          }}
-                        />
-                      ))}
-                    </Box>
-
-                    {/* Center Logo */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        width: 40,
-                        height: 40,
-                        bgcolor: 'white',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        boxShadow: '0 0 5px rgba(0,0,0,0.2)'
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-                        UPI
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Typography variant="body2" color="text.secondary" align="center">
-                    Amount: ₹{paymentData.amount}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 1 }}>
-                    QR code is valid for 15 minutes
-                  </Typography>
-                </Box>
-              </Box>
-            )}
+            {/* Payment Methods Component */}
+            <PaymentMethods
+              paymentData={paymentData}
+              onPaymentDataChange={handlePaymentDataChange}
+              errors={paymentErrors}
+            />
 
             <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
               <Button

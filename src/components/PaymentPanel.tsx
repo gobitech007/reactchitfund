@@ -63,7 +63,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   const notifyChanges = useCallback((updates: Partial<PaypanelChange>) => {
     if (onChangeValues) {
       // Find the selected chit in the list to get its chit_id and chit_no
-      const selectedChitItem = chitList.find(chit => chit.chit_no === (updates.chitId || selectedChit));
+      const selectedChitItem = chitList.find(chit => chit.chit_no === (updates.chitNo || selectedChit));
       
       // Use the chit_id from the selected chit if available, otherwise use the chit_no as fallback
       const chitId = selectedChitItem?.chit_id || updates.chitId || selectedChit;
