@@ -52,8 +52,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   const [weekSelection, setWeekSelection] = useState<number>(1); // Default to 1 week
   const [error, setError] = useState<string | null>(null);
   const [showBaseAmountNoValidation, setShowBaseAmountNoValidation] = useState<boolean>(false);
-  const [isCreatingChit, setIsCreatingChit] = useState<boolean>(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isCreatingChit,  setIsCreatingChit] = useState<boolean>(false);
   const [notification, setNotification] = useState<{show: boolean, message: string}>({
     show: false,
     message: ''
@@ -147,23 +146,24 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   // Handle base amount change with validation
   const handleBaseAmountChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value, 10);
+    const validation = validateBaseAmount(value);
     
     // If in no validation mode, just set the value without validation
-    if (showBaseAmountNoValidation) {
+    if (showBaseAmountNoValidation && validation.isValid) {
       // Even in no validation mode, ensure we don't set NaN
       if (isNaN(value)) {
         if (baseAmount !== 200) {
           setBaseAmount(200);
           notifyChanges({ baseAmount: 200 });
         }
-      } else if (value !== baseAmount) {
-        setBaseAmount(value);
-        notifyChanges({ baseAmount: value });
+      } else {
+          setBaseAmount(value);
+          notifyChanges({ baseAmount: value });        
       }
       
       // Check if the user has completed entering the amount (by checking if the input loses focus)
       // We'll implement this with a blur event handler
-      return;
+      return setError(validation.error);;
     }
     
     // If empty or not a number, set to minimum
@@ -212,6 +212,14 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     }
   };
   
+  const validateBaseAmount = (amount: number) => {
+    const isValid = amount >= 200;
+    return {
+      isValid,
+      error: isValid ? null : 'Base amount must be at least ₹200'
+    };
+  };
+  
   // Handle base amount blur event to create a new chit when in no validation mode
   const handleBaseAmountBlur = async () => {
     if (showBaseAmountNoValidation && !isNaN(baseAmount) && baseAmount > 0 && !isCreatingChit) {
@@ -221,6 +229,10 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         amount: baseAmount,
         chit_no: (chitList.length + 1)
       };
+      const validation = validateBaseAmount(baseAmount);
+      if (!validation.isValid) {
+        return false;
+      }
       try {
         // Create a new chit user
         const newChit = await PaymentService.createChitUsers(newChitData);
@@ -236,7 +248,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           };
           
           // Create a new array instead of mutating the existing one
-          const updatedChitList = [...chitList, newChitItem];
+          // const updatedChitList = [...chitList, newChitItem];
           
           // Select the new chit
           setSelectedChit(newChitItem.chit_no);
@@ -259,8 +271,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           // Turn off no validation mode
           setIsFieldVisible(false);
         }
+        setError(newChit?.error);
       } catch (error) {
-        // console.error('Error creating new chit:', error);
         setError('Failed to create new chit. Please try again.'+ error);
       } finally {
         setIsCreatingChit(false);
@@ -278,6 +290,11 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   // Handle pay amount change
   const handlePayAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value, 10);
+
+    // if (!validateBaseAmount(value)?.isValid) {
+    //   setError(`Pay amount must be at least ₹${baseAmount}`);
+    //   return false;
+    // }
     
     // If empty or not a number, set to base amount
     if (isNaN(value) || value < 0) {
@@ -291,14 +308,14 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     }
     
     // Validate for minimum amount (base amount)
-    if (value < baseAmount) {
-      if (value !== payAmount) {
-        setPayAmount(value);
-        setError(`Pay amount must be at least ₹${baseAmount}`);
-        notifyChanges({ payAmount: value });
-      }
-      return;
-    }
+    // if (value < baseAmount) {
+    //   if (value !== payAmount) {
+    //     setPayAmount(value);
+    //     setError(`Pay amount must be at least ₹${baseAmount}`);
+    //     notifyChanges({ payAmount: value });
+    //   }
+    //   return;
+    // }
     
     // Validate that pay amount is a multiple of base amount
     if (value % baseAmount !== 0) {
@@ -449,6 +466,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
           value={payAmount !== undefined && !isNaN(payAmount) ? payAmount : ''}
           onChange={handlePayAmountChange}
           InputProps={{
+            readOnly: true,
             startAdornment: (
               <InputAdornment position="start">
                 <CurrencyRupeeIcon />

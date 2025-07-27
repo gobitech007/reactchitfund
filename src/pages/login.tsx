@@ -10,12 +10,15 @@ import {
   Link,
   Tabs,
   Tab,
+  IconButton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
 import PhoneIcon from "@mui/icons-material/Phone";
 import BadgeIcon from "@mui/icons-material/Badge";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 import { validateEmail, validateMobileNumber, validateAadharNumber } from "../utils/form-utils";
 import { withNavigation } from "../utils/withNavigation";
@@ -36,6 +39,7 @@ interface LoginState {
   phone: string;
   aadharNumber: string;
   password: string;
+  showPassword: boolean;
   errors: {
     email: string;
     phone: string;
@@ -53,6 +57,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
       phone: "",
       aadharNumber: "",
       password: "",
+      showPassword: false,
       errors: {
         email: "",
         phone: "",
@@ -64,6 +69,12 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
 
   handleTabChange = (event: React.SyntheticEvent, newValue: 'email' | 'mobile' | 'aadhar') => {
     this.setState({ loginMethod: newValue });
+  };
+
+  handleTogglePasswordVisibility = () => {
+    this.setState(prevState => ({
+      showPassword: !prevState.showPassword
+    }));
   };
 
   handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,10 +100,11 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
         break;
     }
 
-    this.setState({
+    this.setState(prevState => ({
+      ...prevState,
       errors,
       [name]: value,
-    } as Pick<LoginState, keyof LoginState>);
+    }));
   };
 
   isFormValid = () => {
@@ -218,6 +230,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
       phone: "",
       aadharNumber: "",
       password: "",
+      showPassword: false,
       errors: {
         email: "",
         phone: "",
@@ -393,7 +406,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
                   fullWidth
                   label={`${t('auth.password')} (${t('common.optional')})`}
                   name="password"
-                  type="password"
+                  type={this.state.showPassword ? "text" : "password"}
                   value={this.state.password}
                   onChange={this.handleChange}
                   error={errors.password !== ""}
@@ -427,6 +440,18 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
                     startAdornment: (
                       <InputAdornment position="start">
                         <LockIcon />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={this.handleTogglePasswordVisibility}
+                          edge="end"
+                          size="small"
+                        >
+                          {this.state.showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
                       </InputAdornment>
                     ),
                   }}

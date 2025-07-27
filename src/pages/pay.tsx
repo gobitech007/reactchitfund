@@ -52,6 +52,8 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   
   // State for paid cells
   const [paidCells, setPaidCells] = useState<CellData[]>([]);
+  const [chitSelectId, setChitSelectId] = useState<string>('');
+  const [calendarSelection, setCalendarSelection] = useState<boolean>(false);
 
   // State for notification
   const [notification, setNotification] = useState({
@@ -132,55 +134,46 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const MAX_SELECTIONS = 54;
 
   const handleCellClick = (cellNumber: number) => {
+    const paidWeeks = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
     setSelectedCells(prev => {
-      // If already selected, remove it
+      // Check if cell is disabled or already paid
+      if (disabledCells.includes(cellNumber) || paidWeeks.includes(cellNumber)) {
+        setNotification({
+          open: true,
+          message: 'This week is already paid or not available',
+          severity: 'warning'
+        });
+        return prev;
+      }
+
+      // If already selected, remove it (toggle functionality)
       if (prev.includes(cellNumber)) {
-        // When removing a cell, only allow removing the highest number
-        // to maintain sequential selection
-        if (cellNumber === Math.max(...prev)) {
-          return prev.filter(cell => cell !== cellNumber);
-        } else {
-          setNotification({
-            open: true,
-            message: 'You can only deselect the last selected week',
-            severity: 'warning'
-          });
-          return prev;
-        }
+        return prev.filter(cell => cell !== cellNumber);
       }
       
       // If max selections reached, show warning and don't add
       if (prev.length >= MAX_SELECTIONS) {
         setNotification({
           open: true,
-          message: `You can only select up to ${MAX_SELECTIONS} week`,
+          message: `You can only select up to ${MAX_SELECTIONS} weeks`,
           severity: 'warning'
         });
         return prev;
       }
-
-      // For sequential selection, check if the new cell is the next in sequence
-      if (prev.length === 0) {
-        // First selection can be any cell
-        return [cellNumber];
-      } else {
-        // Get the highest currently selected cell
-        const highestSelected = Math.max(...prev);
-        
-        // Only allow selection if it's the next cell in sequence
-        if (cellNumber === highestSelected + 1) {
-          return [...prev, cellNumber];
-        } else {
-          setNotification({
-            open: true,
-            message: 'You must select weeks in sequential order',
-            severity: 'warning'
-          });
-          return prev;
-        }
+      const cellAdded = [...prev, cellNumber].sort((a, b) => a - b);
+      if (cellAdded?.length > 0) {
+        setCalendarSelection(true);
       }
+
+      // Add the cell to selection (multi-select - any available cell can be selected)
+      return  cellAdded; // Keep the array sorted for better UX
     });
   };
+
+  // Debug useEffect to log selectedCells changes
+  useEffect(() => {
+    console.log('Selected cells updated:', selectedCells);
+  }, [selectedCells]);
 
   useEffect(() => { 
     const paidCellsWeek = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
@@ -239,7 +232,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const handleFinalPaymentSubmit = async () => {
     try {
       // Get the first chit from the list (assuming we're paying for the selected chit)
-      const selectedChit = chitList.length > 0 ? chitList[0] : null;
+      const selectedChit = chitSelectId ? chitSelectId : chitList.length > 0 ? chitList[0].chit_no : null;
       
       if (!selectedChit || !currentUser) {
         setNotification({
@@ -274,7 +267,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         // Prepare backend payment request data for this week
         const backendPayload = {
           user_id: currentUser.user_id,
-          chit_no: parseInt(selectedChit.chit_no),
+          chit_no: parseInt(selectedChit),
           amount: amountPerWeek, // Divide amount among weeks
           week_no: week,
           pay_type: paymentData.paymentMethod === 'credit_card' || paymentData.paymentMethod === 'debit_card' 
@@ -344,12 +337,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       }
 
       // Clear selected cells after successful payment
-      setSelectedCells([]);
+      // setSelectedCells([]);
       
       // Refresh payment details to update the UI with newly paid weeks
-      if (selectedChit && selectedChit.chit_no) {
+      if (selectedChit && selectedChit) {
         // Force refresh after payment to get updated data
-        fetchChitPaymentDetailsRef.current(selectedChit.chit_no, true);
+        fetchChitPaymentDetailsRef.current(selectedChit, true);
       }
 
       // In a real app, you might navigate to another page after successful payment
@@ -379,7 +372,8 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const currentMonth = getCurrentMonthName();
 
   // Handle payment panel submission
-  const handlePayModal = (data: PaymentData) => {    
+  const handlePayModal = (data: PaymentData) => { 
+    setChitSelectId(data?.chitId)   ;
     // Update payment data
     setPaymentData(prev => ({
       ...prev,
@@ -461,10 +455,10 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         // Set paid cells from the response
         setPaidCells(response.data);
         
-        // Update disabled cells to include paid cells
-        const newDisabledCells = response.data
+        // Update disabled cells to include paid cells (remove duplicates using Set)
+        const newDisabledCells = Array.from(new Set(response.data
           .filter(cell => cell.is_paid === 'Y')
-          .map(cell => cell.week);
+          .map(cell => cell.week)));
         setDisabledCells(newDisabledCells);
       }
     } catch (error) {
@@ -511,34 +505,38 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     payAmount: number;
     weekSelection: number;
   }) => { 
-    setSelectedCells([]);  
-    if (values.baseAmount?.toString().length < 3 || (values && values.payAmount !== 0 && values.payAmount?.toString().length < 3)) {
-      return; 
-    } 
-    // Fetch payment details when chit ID changes
-    if (values.chitId && values.baseAmount.toString().length >= 2) {
-      fetchChitPaymentDetails(values.chitId);
-    }
-    
-    // Update selected cells based on weekSelection
-    // This is just an example - you might want to implement your own logic
-    const paidCellsLength = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
-    const newSelectedCells: number[] = paidCellsLength; // Include previous array values
-    const maxSelectedCell = paidCellsLength.length > 0 ? Math.max(...paidCellsLength) : 0;
-    for (let i = 1; i <= (values.weekSelection + maxSelectedCell); i++) {
-      // Only add to selected cells if not already paid and not already in the array
-      const isPaid = paidCells.some(cell => cell.week === i && cell.is_paid === 'Y');
-      const isAlreadySelected = newSelectedCells.includes(i);
-      if (!isPaid && !isAlreadySelected) {
-        newSelectedCells.push(i);
+    if (calendarSelection) {
+
+    } else {
+      setSelectedCells([]);  
+      if (values.baseAmount?.toString().length < 3 || (values && values.payAmount !== 0 && values.payAmount?.toString().length < 3)) {
+        return; 
+      } 
+      // Fetch payment details when chit ID changes
+      if (values.chitId && values.baseAmount.toString().length >= 2) {
+        fetchChitPaymentDetails(values.chitId);
       }
+      
+      // Update selected cells based on weekSelection
+      // This is just an example - you might want to implement your own logic
+      const paidCellsLength = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
+      const newSelectedCells: number[] = paidCellsLength; // Include previous array values
+      const maxSelectedCell = paidCellsLength.length > 0 ? Math.max(...paidCellsLength) : 0;
+      for (let i = 1; i <= (values.weekSelection + maxSelectedCell); i++) {
+        // Only add to selected cells if not already paid and not already in the array
+        const isPaid = paidCells.some(cell => cell.week === i && cell.is_paid === 'Y');
+        const isAlreadySelected = newSelectedCells.includes(i);
+        if (!isPaid && !isAlreadySelected) {
+          newSelectedCells.push(i);
+        }
+      }
+      setSelectedCells(newSelectedCells);
+      // Update payment data
+      setPaymentData(prev => ({
+        ...prev,
+        amount: values.payAmount
+      }));
     }
-    setSelectedCells(newSelectedCells);
-    // Update payment data
-    setPaymentData(prev => ({
-      ...prev,
-      amount: values.payAmount
-    }));
   };
 
   const weekSelected = () => {
