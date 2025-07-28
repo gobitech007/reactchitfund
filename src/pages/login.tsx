@@ -52,7 +52,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
   constructor(props: LoginPropsWithTranslation) {
     super(props);
     this.state = {
-      loginMethod: 'email',
+      loginMethod: 'mobile',
       email: "",
       phone: "",
       aadharNumber: "",
@@ -258,59 +258,14 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
               variant="fullWidth"
               aria-label="login method tabs"
             >
-              <Tab value="email" label={t('auth.email')} />
               <Tab value="mobile" label={t('auth.mobile')} />
+              <Tab value="email" label={t('auth.email')} />
               <Tab value="aadhar" label={t('auth.aadhar')} />
             </Tabs>
           </Box>
 
           <Box component="form" onSubmit={this.handleSubmit} sx={{ mt: 3 }}>
             <Grid container spacing={3}>
-              {loginMethod === 'email' && (
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label={t('auth.email')}
-                    name="email"
-                    type="email"
-                    value={this.state.email}
-                    onChange={this.handleChange}
-                    error={errors.email !== ""}
-                    helperText={errors.email}
-                    required
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor:
-                            this.state.email && errors.email === ""
-                              ? "green"
-                              : "",
-                        },
-                        "&:hover fieldset": {
-                          borderColor:
-                            this.state.email && errors.email === ""
-                              ? "green"
-                              : "",
-                        },
-                        "&.Mui-focused fieldset": {
-                          borderColor:
-                            this.state.email && errors.email === ""
-                              ? "green"
-                              : "",
-                        },
-                      },
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <EmailIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-              )}
-
               {loginMethod === 'mobile' && (
                 <Grid size={12}>
                   <TextField
@@ -349,6 +304,51 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
                       startAdornment: (
                         <InputAdornment position="start">
                           <PhoneIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              )}
+
+              {loginMethod === 'email' && (
+                <Grid size={12}>
+                  <TextField
+                    fullWidth
+                    label={t('auth.email')}
+                    name="email"
+                    type="email"
+                    value={this.state.email}
+                    onChange={this.handleChange}
+                    error={errors.email !== ""}
+                    helperText={errors.email}
+                    required
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor:
+                            this.state.email && errors.email === ""
+                              ? "green"
+                              : "",
+                        },
+                        "&:hover fieldset": {
+                          borderColor:
+                            this.state.email && errors.email === ""
+                              ? "green"
+                              : "",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor:
+                            this.state.email && errors.email === ""
+                              ? "green"
+                              : "",
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailIcon />
                         </InputAdornment>
                       ),
                     }}

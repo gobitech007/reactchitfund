@@ -69,9 +69,13 @@ const CellGrid: React.FC<CellGridProps> = ({
 
   // Create a map of paid cells for faster lookup
   const paidCellsMap = new Map<number, boolean>();
+  const paidCellsUpdatedAtMap = new Map<number, string>();
   paidCells.forEach(cell => {
     if (cell.is_paid === 'Y') {
       paidCellsMap.set(cell.week, true);
+      if (cell.updated_at) {
+        paidCellsUpdatedAtMap.set(cell.week, cell.updated_at);
+      }
     }
   });
 
@@ -87,12 +91,13 @@ const CellGrid: React.FC<CellGridProps> = ({
           // If a cell is paid, it should also be disabled
           const isDisabled = disabledCells.includes(cellNumber) || isPaid;
           const isSelected = selectedCells.includes(cellNumber);
+          const updatedAt = paidCellsUpdatedAtMap.get(cellNumber);
           
           return (
             <Grid item xs={6} sm={4} md={3} lg={2} key={cellNumber}>
               <Tooltip 
                 title={isPaid 
-                  ? "Already paid for this week" 
+                  ? (updatedAt ? `Paid on: ${new Date(updatedAt).toLocaleDateString()}` : "Already paid for this week")
                   : isDisabled 
                     ? "This week is not available" 
                     : `Week ${cellNumber}`}
@@ -115,6 +120,13 @@ const CellGrid: React.FC<CellGridProps> = ({
                   >
                     <Typography variant="h6">
                       {cellNumber}
+                      <span className='text-size-9 text-muted d-block mt-1'>
+                        {updatedAt && (
+                        <>
+                          {new Date(updatedAt).toLocaleDateString()}
+                        </>
+                      )}
+                      </span>
                     </Typography>
                   </Cell>
                 </Box>

@@ -3,7 +3,7 @@
  * Handles payment processing and transaction management
  */
 
-import { Transaction, SavedPaymentMethod, PaymentStatus, PaymentMethod, CardDetails, ChitItem, ChitListItem } from '../utils/interface-utils';
+import { Transaction, SavedPaymentMethod, PaymentStatus, PaymentMethod, CardDetails, ChitItem, ChitListItem, CellData } from '../utils/interface-utils';
 import ApiService, { ApiResponse } from './api.service';
 
 /**
@@ -26,7 +26,7 @@ export interface IPaymentService {
   validateCardDetails: (cardDetails: CardDetails) => { isValid: boolean; errors: Record<string, string> };
   validateUpiId: (upiId: string) => { isValid: boolean; error?: string };
   getChitUsers: (user_id: string) => Promise<ApiResponse<{ status: PaymentStatus }>>;
-  getChitPaymentDetails: (chit_id: string) => Promise<ApiResponse<{ week: number; is_paid: 'Y' | 'N' }[]>>;
+  getChitPaymentDetails: (chit_id: string) => Promise<ApiResponse<CellData[]>>;
   getTransactionHistoryPage: (params: { skip?: number, limit?: number }) => Promise<ApiResponse<any>>;
   createChitUsers: (chitUsers: Partial<ChitListItem>) => Promise<ApiResponse<ChitListItem>>;
 }
@@ -232,7 +232,7 @@ export const PaymentService: IPaymentService = {
     if (!chit_id) {
       throw new Error('Chit ID is required');
     }
-    return await ApiService.get<{ week: number; is_paid: 'Y' | 'N' }[]>(`/payments/chit_users/${chit_id}/pay_details/`);
+    return await ApiService.get<CellData[]>(`/payments/chit_users/${chit_id}/pay_details/`);
   },
   getTransactionHistoryPage: async(params: { skip?: number, limit?: number }) => {
       // Convert numeric parameters to strings as required by ApiService

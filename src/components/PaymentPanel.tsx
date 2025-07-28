@@ -31,7 +31,7 @@ interface PaymentPanelProps {
   selectWeek?: number[];
   onChangeValues?: (values: PaypanelChange) => void;
   alreadyBaseAmount?: () => boolean;
-  currentUserId?: number; // Add current user ID prop
+  currentUserId: number; // Required current user ID prop
   maxSelection: number;
 }
 
@@ -42,7 +42,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   selectWeek = [], // Default to empty array if not provided
   onChangeValues,
   alreadyBaseAmount,
-  currentUserId = 1, // Default to user ID 1 if not provided
+  currentUserId, // Required current user ID
   maxSelection
 }) => {
   // State for form fields
@@ -223,6 +223,13 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   // Handle base amount blur event to create a new chit when in no validation mode
   const handleBaseAmountBlur = async () => {
     if (showBaseAmountNoValidation && !isNaN(baseAmount) && baseAmount > 0 && !isCreatingChit) {
+      // Validate that we have a current user ID
+      if (!currentUserId) {
+        setError('User ID is required to create a new chit');
+        setIsCreatingChit(false);
+        return;
+      }
+      
       setIsCreatingChit(true);
       const newChitData: ChitListItem = {
         user_id: currentUserId,
@@ -231,7 +238,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       };
       const validation = validateBaseAmount(baseAmount);
       if (!validation.isValid) {
-        return false;
+        setIsCreatingChit(false);
+        return;
       }
       try {
         // Create a new chit user
@@ -246,9 +254,16 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             amount: newChit.data.amount,
             name: `Chit ${newChit.data.chit_no} - ₹${newChit.data.amount}`
           };
+
+          const newChitList = {
+            chit_id: newChit.data?.chit_id?.toString(),
+            chit_no: newChit.data.chit_no.toString(),
+            amount: newChit.data.amount,
+            name: `Weekly Chit ${newChit.data.chit_no} - ₹${newChit.data.amount}`
+          };
           
           // Create a new array instead of mutating the existing one
-          // const updatedChitList = [...chitList, newChitItem];
+          chitList.push(newChitList);
           
           // Select the new chit
           setSelectedChit(newChitItem.chit_no);

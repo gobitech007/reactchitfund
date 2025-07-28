@@ -60,14 +60,16 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
         errors.fullName = validateFullName(value as string) ? "" : (value as string).length < 3 ? "Full Name must be at least 3 characters" : "";
         break;
       case "email":
-        errors.email = validateEmail(value as string) ? "" : "Please enter a valid email address";
+        // Only validate email if it's not empty (since it's optional)
+        errors.email = !value || validateEmail(value as string) ? "" : "Please enter a valid email address";
         break;
       case "mobileNumber":
         const formattedValue = formatMobileNumber(value as string);
         this.setState({ mobileNumber: formattedValue });
         break;
       case "aadharNumber":
-        errors.aadharNumber = validateAadharNumber(value as string) ? "" : "Aadhar number must be 12 digits";
+        // Only validate aadhar if it's not empty (since it's optional)
+        errors.aadharNumber = !value || validateAadharNumber(value as string) ? "" : "Aadhar number must be 12 digits";
         const formatedAadharNumber = formatAadharNumber(value as string);
         this.setState({ aadharNumber: formatedAadharNumber });
         break;
@@ -109,16 +111,14 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
       errors,
     } = this.state;
 
-    // Check if all required fields are filled
+    // Check if all required fields are filled (email and aadhar are now optional)
     if (
       !fullName ||
-      !email ||
       !mobileNumber ||
       !birthDay ||
       !birthMonth ||
       !birthYear ||
-      !pin ||
-      !aadharNumber
+      !pin
     ) {
       return false;
     }
@@ -133,7 +133,8 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
     // Check specific field validations
     if (fullName.length < 3) return false;
     if (mobileNumber.length !== 10) return false;
-    if (aadharNumber.length !== 12) return false;
+    // Only validate aadhar length if it's provided (since it's optional)
+    if (aadharNumber && aadharNumber.length !== 12) return false;
 
     // All validations passed
     return true;
@@ -185,22 +186,21 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
     if (
       valid &&
       fullName &&
-      email &&
       mobileNumber &&
       birthDay &&
       birthMonth &&
       birthYear &&
-      aadharNumber && pin
+      pin
     ) {
       try {
         // Form is valid, proceed with submission
         const formData = {
           fullName,
-          email,
+          email: email || '', // Use empty string if email is not provided
           password: '', // This would need to be added to the form
           mobileNumber,
           dateOfBirth: `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`,
-          aadharNumber: aadharNumber.replace(/\s/g, ""), // Remove spaces for submission
+          aadharNumber: aadharNumber ? aadharNumber.replace(/\s/g, "") : '', // Use empty string if aadhar is not provided
           pin: parseInt(pin) || 0, // Convert string to number
         };
         
@@ -300,31 +300,30 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
-                  label={t('auth.email')}
+                  label={`${t('auth.email')} (${t('auth.optional')})`}
                   name="email"
                   type="email"
                   value={this.state.email}
                   onChange={this.handleChange}
                   error={errors.email !== ""}
                   helperText={errors.email}
-                  required
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       "& fieldset": {
                         borderColor:
-                          this.state.email && errors.email === ""
+                          (this.state.email && errors.email === "") || (!this.state.email && errors.email === "")
                             ? "green"
                             : "",
                       },
                       "&:hover fieldset": {
                         borderColor:
-                          this.state.email && errors.email === ""
+                          (this.state.email && errors.email === "") || (!this.state.email && errors.email === "")
                             ? "green"
                             : "",
                       },
                       "&.Mui-focused fieldset": {
                         borderColor:
-                          this.state.email && errors.email === ""
+                          (this.state.email && errors.email === "") || (!this.state.email && errors.email === "")
                             ? "green"
                             : "",
                       },
@@ -476,7 +475,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
               <Grid size={{xs: 12, md: 6}}>
                 <TextField
                   fullWidth
-                  label={`${t('auth.aadharNumber')} (12 digits)`}
+                  label={`${t('auth.aadharNumber')} (${t('auth.optional')})`}
                   name="aadharNumber"
                   value={this.state.aadharNumber.replace(
                     /(\d{4})(?=\d)/g,
@@ -485,7 +484,6 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                   onChange={this.handleChange}
                   error={errors.aadharNumber !== ""}
                   helperText={errors.aadharNumber || `${t('time.format')}": XXXX XXXX XXXX"`}
-                  required
                   inputProps={{
                     maxLength: 14, // 12 digits + 2 spaces
                   }}
@@ -493,22 +491,22 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                     "& .MuiOutlinedInput-root": {
                       "& fieldset": {
                         borderColor:
-                          this.state.aadharNumber.length === 12 &&
-                          errors.aadharNumber === ""
+                          (this.state.aadharNumber.length === 12 && errors.aadharNumber === "") || 
+                          (!this.state.aadharNumber && errors.aadharNumber === "")
                             ? "green"
                             : "",
                       },
                       "&:hover fieldset": {
                         borderColor:
-                          this.state.aadharNumber.length === 12 &&
-                          errors.aadharNumber === ""
+                          (this.state.aadharNumber.length === 12 && errors.aadharNumber === "") || 
+                          (!this.state.aadharNumber && errors.aadharNumber === "")
                             ? "green"
                             : "",
                       },
                       "&.Mui-focused fieldset": {
                         borderColor:
-                          this.state.aadharNumber.length === 12 &&
-                          errors.aadharNumber === ""
+                          (this.state.aadharNumber.length === 12 && errors.aadharNumber === "") || 
+                          (!this.state.aadharNumber && errors.aadharNumber === "")
                             ? "green"
                             : "",
                       },

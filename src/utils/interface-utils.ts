@@ -44,6 +44,7 @@ export interface PaymentFormData {
 export interface CellData {
     week: number;
     is_paid: 'Y' | 'N';
+    updated_at?: string;
 }
 
 export interface CellProps extends PaperProps {

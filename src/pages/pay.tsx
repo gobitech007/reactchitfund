@@ -387,13 +387,13 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       }
       
       // All payments succeeded
-      const response = responses[0]; // Use the first response for notification
+      const response = responses.flatMap(response => response?.data).flat(); // Flatten nested arrays; // Use the first response for notification
 
-      if (response.error) {
+      if (responses[0].error) {
         // Show error notification
         setNotification({
           open: true,
-          message: `Payment failed: ${response.error}`,
+          message: `Payment failed: ${responses[0].error}`,
           severity: 'error'
         });
         return;
@@ -661,6 +661,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               alreadyBaseAmount={handleDisableBaseAmount}
               selectWeek={selectWeek}
               maxSelection={MAX_SELECTIONS}
+              currentUserId={currentUser?.user_id || 0}
             />
           )}
         </Box>
