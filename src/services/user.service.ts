@@ -9,7 +9,8 @@ import { RegisterRequest, User } from './auth.service';
 // User profile update request
 export interface UserUpdateRequest {
   fullName?: string;
-  mobileNumber?: string;
+  mobileNumber?: string; // Keep optional for updates, but mandatory for registration
+  email?: string; // Optional
   dateOfBirth?: string;
   aadharNumber?: string;
   address?: string;

@@ -65,6 +65,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
         break;
       case "mobileNumber":
         const formattedValue = formatMobileNumber(value as string);
+        errors.mobileNumber = formattedValue.replace(/\s/g, "").length === 10 ? "" : "Mobile number must be 10 digits";
         this.setState({ mobileNumber: formattedValue });
         break;
       case "aadharNumber":
@@ -74,9 +75,11 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
         this.setState({ aadharNumber: formatedAadharNumber });
         break;
       case "pin":
-        // if (isNaN(parseInt(value))) {
-        //   errors.pin = "PIN should only contain numbers";
-        // }
+        if (isNaN(parseInt(value))) {
+          errors.pin = "PIN should only contain numbers";
+        } else {
+          errors.pin = "";
+        }
         this.setState({ pin: value });
         break;
       default:
@@ -132,9 +135,9 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
 
     // Check specific field validations
     if (fullName.length < 3) return false;
-    if (mobileNumber.length !== 10) return false;
+    if (mobileNumber.replace(/\s/g, "").length !== 10) return false;
     // Only validate aadhar length if it's provided (since it's optional)
-    if (aadharNumber && aadharNumber.length !== 12) return false;
+    if (aadharNumber && aadharNumber.replace(/\s/g, "").length !== 12) return false;
 
     // All validations passed
     return true;
@@ -196,11 +199,11 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
         // Form is valid, proceed with submission
         const formData = {
           fullName,
-          email: email || '', // Use empty string if email is not provided
+          email: email.trim() || undefined, // Use undefined if email is empty (optional field)
           password: '', // This would need to be added to the form
-          mobileNumber,
+          mobileNumber: mobileNumber.replace(/\s/g, ""), // Remove spaces from mobile number
           dateOfBirth: `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`,
-          aadharNumber: aadharNumber ? aadharNumber.replace(/\s/g, "") : '', // Use empty string if aadhar is not provided
+          aadharNumber: aadharNumber ? aadharNumber.replace(/\s/g, "") : undefined, // Use undefined if aadhar is empty (optional field)
           pin: parseInt(pin) || 0, // Convert string to number
         };
         

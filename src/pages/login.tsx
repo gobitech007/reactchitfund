@@ -260,7 +260,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
             >
               <Tab value="mobile" label={t('auth.mobile')} />
               <Tab value="email" label={t('auth.email')} />
-              <Tab value="aadhar" label={t('auth.aadhar')} />
+              {/* <Tab value="aadhar" label={t('auth.aadhar')} /> */}
             </Tabs>
           </Box>
 

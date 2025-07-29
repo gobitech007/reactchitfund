@@ -317,6 +317,7 @@ export interface FormErrors {
   mobileNumber: string;
   dateOfBirth: string;
   aadharNumber: string;
+  pin: string;
 }
 
 // Define types for the component state
@@ -357,6 +358,7 @@ export const handleEmptyInput = (): RegisterState => {
       mobileNumber: "",
       dateOfBirth: "",
       aadharNumber: "",
+      pin: "",
     },
   }
 }

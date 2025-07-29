@@ -9,8 +9,8 @@ import tokenService from './token.service';
 export interface User {
   id: string;
   fullName: string;
-  email: string;
-  mobileNumber: string;
+  email?: string; // Made optional
+  mobileNumber: string; // Mandatory
   dateOfBirth?: string;
   aadharNumber?: string;
   createdAt?: string;
@@ -35,11 +35,11 @@ export interface LoginResponse {
 // Registration request payload
 export interface RegisterRequest {
   fullName: string;
-  email: string;
+  email?: string; // Made optional
   password: string;
-  mobileNumber: string;
+  mobileNumber: string; // Mandatory
   dateOfBirth: string;
-  aadharNumber: string;
+  aadharNumber?: string; // Made optional
   pin: number;
 }
 
