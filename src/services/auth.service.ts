@@ -4,10 +4,12 @@
  */
 import ApiService from './api.service';
 import tokenService from './token.service';
+import { logUserCreationAttempt } from '../utils/debug-helpers';
 
 // User interfaces
 export interface User {
-  id: string;
+  user_id: string;
+  id?: string; // Keep for backward compatibility
   fullName: string;
   email?: string; // Made optional
   mobileNumber: string; // Mandatory
@@ -77,13 +79,26 @@ export const AuthService = {
     const response = await ApiService.post<LoginResponse>('/auth/login', credentials);
 
     if (response.data && response.data.access_token) {
-      // Store auth token and user data in localStorage
-      localStorage.setItem('authToken', response.data.access_token);
-      // AuthService.getCurrentUserData();
+      // Store auth token and user data in sessionStorage
+      sessionStorage.setItem('authToken', response.data.access_token);
+      
+      // Extract user_id from login response
+      let user_id = null;
+      try {
+        // The user_id is available in the user object according to LoginResponse interface
+        if (response.data.user && (response.data.user.user_id || response.data.user.id)) {
+          user_id = response.data.user.user_id || response.data.user.id;
+          console.log(`Logged in as user_id: ${user_id}`);
+        } else {
+          console.warn('user_id not found in login response:', response.data);
+        }
+      } catch (error) {
+        console.warn('Could not extract user_id from login response:', error);
+      }
 
       // Store refresh token if available
       if (response.data.refreshToken) {
-        localStorage.setItem('refreshToken', response.data.refreshToken);
+        sessionStorage.setItem('refreshToken', response.data.refreshToken);
       }
       
       // Set up automatic token refresh
@@ -110,21 +125,25 @@ export const AuthService = {
       role: "customer"
     };
     console.log('Sending registration data:', JSON.stringify(userDataFinal));
+    
+    // Log user creation attempt for debugging
+    logUserCreationAttempt(userDataFinal);
+    
     return await ApiService.post<User>('/users/', userDataFinal);
   },
 
   /**
    * Logout current user
-   * Removes auth tokens and user data from localStorage
+   * Removes auth tokens and user data from sessionStorage
    */
   logout: () => {
     // Clear token refresh
     tokenService.clearTokenRefresh();
     
-    // Remove tokens and user data from localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    // Remove tokens and user data from sessionStorage
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('user');
     
     // Optional: Call logout endpoint to invalidate token on server
     ApiService.post('/auth/logout').catch(error => {
@@ -137,7 +156,7 @@ export const AuthService = {
    * @returns Boolean indicating if user is authenticated
    */
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('authToken');
+    return !!sessionStorage.getItem('authToken');
   },
 
   /**
@@ -145,7 +164,7 @@ export const AuthService = {
    * @returns Current user object or null
    */
   getCurrentUser: (): User | null => {
-    const userJson = localStorage.getItem('user');
+    const userJson = sessionStorage.getItem('user');
     return userJson ? JSON.parse(userJson) : null;
   },
 
@@ -177,7 +196,7 @@ export const AuthService = {
     
     if (success) {
       return { 
-        data: { token: localStorage.getItem('authToken') || '' }, 
+        data: { token: sessionStorage.getItem('authToken') || '' }, 
         error: null, 
         status: 200 
       };

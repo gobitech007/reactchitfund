@@ -136,13 +136,13 @@ export const useDynamicApiStore = (key: ApiEndpointKey, options: DynamicApiOptio
           
           // If still not found, try to use a default or fallback
           if (!userId) {
-            // Try to get from localStorage directly as a last resort
-            const storedUser = localStorage.getItem('user');
+            // Try to get from sessionStorage directly as a last resort
+            const storedUser = sessionStorage.getItem('user');
             if (storedUser) {
               try {
                 const parsedUser = JSON.parse(storedUser);
                 userId = parsedUser.user_id || parsedUser.id || parsedUser._id || parsedUser.userId;
-                // console.log('Found user ID in localStorage:', userId);
+                // console.log('Found user ID in sessionStorage:', userId);
               } catch (e) {
                 // console.error('Error parsing stored user:', e);
               }

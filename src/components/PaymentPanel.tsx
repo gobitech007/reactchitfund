@@ -99,9 +99,14 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     
     // Only run this effect when chitList changes
     if (chitList?.length > 0 && !selectedChit) {
-      const chitId = chitList[0].chit_no;
-      setSelectedChit(chitId);
+      const firstChit = chitList[0];
+      const chitNo = firstChit.chit_no;
+      const chitId = firstChit.chit_id;
+      
+      // Use chit_no for selection (which is required in the interface)
+      setSelectedChit(chitNo);
       updates.chitId = chitId;
+      updates.chitNo = chitNo;
     }
     
     // Notify parent of changes only if we have updates

@@ -5,6 +5,7 @@
 
 import { getApiUrl, isDebugEnabled } from '../utils/env-utils';
 import tokenService from './token.service';
+import apiLogger from '../utils/api-logger';
 
 // Log environment in development mode
 if (isDebugEnabled()) {
@@ -88,7 +89,7 @@ export const apiRequest = async <T = any>(
     
     // Check if token needs refresh before making the request
     if (!isAuthEndpoint) {
-      const token = localStorage.getItem('authToken');
+      const token = sessionStorage.getItem('authToken');
       if (token && tokenService.willTokenExpireSoon(token)) {
         console.log('Token will expire soon, attempting to refresh...');
         await tokenService.refreshToken();
@@ -112,9 +113,19 @@ export const apiRequest = async <T = any>(
     };
 
     // Add auth token if available (get fresh token after possible refresh)
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      
+      // Debug: Log token info for auth-related endpoints
+      if (endpoint.startsWith('/auth/') && isDebugEnabled()) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          console.log('Token payload for', endpoint, ':', payload);
+        } catch (e) {
+          console.warn('Could not parse token payload for debugging:', e);
+        }
+      }
     }
 
     // Prepare request options
@@ -143,6 +154,22 @@ export const apiRequest = async <T = any>(
       console.error('API Error Response:', response.status, response.statusText, data);
       let errorMessage = data?.detail || data?.message || `API Error: ${response.status} ${response.statusText}`;
       
+      // Handle authentication errors (401 Unauthorized)
+      if (response.status === 401) {
+        console.error('Authentication failed for endpoint:', endpoint);
+        console.error('Token used:', token ? 'Present' : 'Missing');
+        if (token && isDebugEnabled()) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.error('Token payload:', payload);
+            console.error('Token expiry:', new Date(payload.exp * 1000));
+          } catch (e) {
+            console.error('Could not parse token for debugging:', e);
+          }
+        }
+        errorMessage = data?.detail || 'Authentication failed - invalid or expired token';
+      }
+      
       // Handle validation errors (422 Unprocessable Entity)
       if (response.status === 422 && data?.detail) {
         try {
@@ -163,6 +190,16 @@ export const apiRequest = async <T = any>(
           console.error('Error parsing validation errors:', e);
         }
       }
+
+      // Log the API error
+      apiLogger.logApiCall(
+        options.method,
+        endpoint,
+        options.body,
+        response.status,
+        data,
+        errorMessage
+      );
       
       return {
         data: null,
@@ -170,6 +207,15 @@ export const apiRequest = async <T = any>(
         status: response.status
       };
     }
+
+    // Log successful API call
+    apiLogger.logApiCall(
+      options.method,
+      endpoint,
+      options.body,
+      response.status,
+      data
+    );
 
     // Return successful response
     return {
@@ -194,6 +240,16 @@ export const apiRequest = async <T = any>(
       }
     }
 
+    // Log network/connection errors
+    apiLogger.logApiCall(
+      options.method,
+      endpoint,
+      options.body,
+      0,
+      null,
+      errorMessage
+    );
+
     return {
       data: null,
       error: errorMessage,
@@ -203,7 +259,7 @@ export const apiRequest = async <T = any>(
 };
 
 export const getToken = () => {
-  return localStorage.getItem('authToken');
+  return sessionStorage.getItem('authToken');
 };
 
 /**

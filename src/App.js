@@ -14,7 +14,9 @@ import ForgotPassword from './pages/forgot-password';
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/applicationData.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
+import DebugButton from './components/DebugButton';
 import { performCorsCheck } from './utils/cors-check';
+import { initializeDebugHelpers } from './utils/debug-helpers';
 
 function App() {
   // Filter routes that require authentication (canView: true)
@@ -28,6 +30,9 @@ function App() {
     performCorsCheck().catch(error => {
       console.error('CORS check failed:', error);
     });
+
+    // Initialize debug helpers
+    initializeDebugHelpers();
   }, []);
 
   return (
@@ -75,6 +80,9 @@ function App() {
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </main>
+          
+          {/* Debug Button - only shows in development mode */}
+          <DebugButton />
         </div>
       </DataProvider>
     </AuthProvider>

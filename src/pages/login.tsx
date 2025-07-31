@@ -201,11 +201,11 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
           } else {
             alert("Login successful!");
             
-            // Store the token in localStorage (already done in AuthService.login)
+            // Store the token in sessionStorage (already done in AuthService.login)
             
             // Store user data if available
             // if (response.data && response.data.user) {
-            //   localStorage.setItem('user', JSON.stringify(response.data.user));
+            //   sessionStorage.setItem('user', JSON.stringify(response.data.user));
             // }
             
             // Navigate to dashboard

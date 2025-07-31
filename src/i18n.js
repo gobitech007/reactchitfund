@@ -36,8 +36,8 @@ i18n
       escapeValue: false, // not needed for react as it escapes by default
     },
     detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
+      order: ['sessionStorage', 'navigator'],
+      caches: ['sessionStorage'],
     },
   });
 

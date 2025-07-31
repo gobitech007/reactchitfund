@@ -37,6 +37,14 @@
     "build:staging": "env-cmd -f .env.staging react-scripts build",
     "build:prod": "env-cmd -f .env.production react-scripts build",
     "test": "react-scripts test",
+    "test:100users": "node src/__tests__/run-100-users-test.js",
+    "test:100users-real-db": "node src/__tests__/run-real-db-test.js",
+    "test:chit-transaction": "node src/__tests__/run-chit-transaction-test.js",
+    "test:integration": "react-scripts test --testPathPattern=integration --watchAll=false",
+    "test:performance": "react-scripts test --testPathPattern=performance --watchAll=false",
+    "test:real-db": "react-scripts test --testPathPattern=real-db-flow --watchAll=false",
+    "test:chit-flow": "react-scripts test --testPathPattern=chit-transaction-flow --watchAll=false",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

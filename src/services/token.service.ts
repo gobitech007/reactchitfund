@@ -23,7 +23,7 @@ class TokenService {
    */
   public init(): void {
     // Check if we have a token
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     if (token) {
       this.setupTokenRefresh(token);
     }
@@ -151,7 +151,7 @@ class TokenService {
     
     try {
       // Get current token
-      const currentToken = localStorage.getItem('authToken');
+      const currentToken = sessionStorage.getItem('authToken');
       if (!currentToken) {
         this.tokenRefreshInProgress = false;
         return false;
@@ -179,7 +179,7 @@ class TokenService {
         
         if (response.data && response.data.access_token) {
           // Store the new token
-          localStorage.setItem('authToken', response.data.access_token);
+          sessionStorage.setItem('authToken', response.data.access_token);
           
           // Set up refresh for the new token
           this.setupTokenRefresh(response.data.access_token);

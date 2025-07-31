@@ -51,10 +51,10 @@ export const UserService = {
     
     // Update local storage user data if successful
     if (response.data) {
-      const currentUser = localStorage.getItem('user');
+      const currentUser = sessionStorage.getItem('user');
       if (currentUser) {
         const updatedUser = { ...JSON.parse(currentUser), ...response.data };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
       }
     }
     

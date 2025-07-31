@@ -3,6 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services';
 import tokenService from '../services/token.service';
 
+// Helper function to create minimal user object from token
+const createMinimalUserFromToken = (token) => {
+  let user_id = null;
+  let email = null;
+  try {
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // The backend stores email in 'sub' field, not user_id
+      email = payload.sub;
+      // Try to get user_id if it exists in payload, otherwise we'll need to fetch it
+      user_id = payload.user_id || payload.id;
+      console.log('Token payload:', { email, user_id, exp: payload.exp });
+    }
+  } catch (e) {
+    console.warn('Could not parse token payload:', e);
+  }
+  
+  return { 
+    token: token,
+    user_id: user_id,
+    email: email,
+    fullName: 'User' // Fallback name
+  };
+};
+
 // Create the authentication context
 const AuthContext = createContext();
 
@@ -18,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is already logged in (from localStorage)
+  // Check if user is already logged in (from sessionStorage)
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -32,15 +57,20 @@ export const AuthProvider = ({ children }) => {
         console.log('User is authenticated, loading user data...');
         
         try {
-          // Try to get user data from localStorage first for immediate display
-          const storedUser = localStorage.getItem('user');
+          // Try to get user data from sessionStorage first for immediate display
+          const storedUser = sessionStorage.getItem('user');
           if (storedUser) {
-            console.log('Found stored user data in localStorage');
+            console.log('Found stored user data in sessionStorage');
             const userData = JSON.parse(storedUser);
-            setCurrentUser(userData);
-            console.log('User data set from localStorage:', userData);
+            // Ensure user_id is available (handle both id and user_id from stored data)
+            const userDataFormatted = {
+              ...userData,
+              user_id: userData.user_id || userData.id
+            };
+            setCurrentUser(userDataFormatted);
+            console.log('User data set from sessionStorage:', userDataFormatted);
           } else {
-            console.log('No stored user data found in localStorage');
+            console.log('No stored user data found in sessionStorage');
           }
           
           // Then fetch fresh data from the API
@@ -51,17 +81,23 @@ export const AuthProvider = ({ children }) => {
             
             if (userResponse && userResponse.data) {
               console.log('Setting user data from API:', userResponse.data);
-              setCurrentUser(userResponse.data);
-              // Update localStorage with fresh data
-              localStorage.setItem('user', JSON.stringify(userResponse.data));
+              // Ensure user_id is available (handle both id and user_id from API)
+              const userData = {
+                ...userResponse.data,
+                user_id: userResponse.data.user_id || userResponse.data.id
+              };
+              setCurrentUser(userData);
+              // Update sessionStorage with fresh data
+              sessionStorage.setItem('user', JSON.stringify(userData));
             } else {
               console.warn("No user data returned from API");
-              // If we don't have user data in localStorage either, create a minimal user object
+              // If we don't have user data in sessionStorage either, create a minimal user object
               if (!storedUser) {
                 console.log('Creating minimal user object');
-                const minimalUser = { token: localStorage.getItem('authToken') };
+                const token = sessionStorage.getItem('authToken');
+                const minimalUser = createMinimalUserFromToken(token);
                 setCurrentUser(minimalUser);
-                localStorage.setItem('user', JSON.stringify(minimalUser));
+                sessionStorage.setItem('user', JSON.stringify(minimalUser));
               }
             }
           } catch (apiError) {
@@ -69,18 +105,20 @@ export const AuthProvider = ({ children }) => {
             // Don't overwrite existing user data if API call fails
             if (!storedUser) {
               console.log('Creating minimal user object after API error');
-              const minimalUser = { token: localStorage.getItem('authToken') };
+              const token = sessionStorage.getItem('authToken');
+              const minimalUser = createMinimalUserFromToken(token);
               setCurrentUser(minimalUser);
-              localStorage.setItem('user', JSON.stringify(minimalUser));
+              sessionStorage.setItem('user', JSON.stringify(minimalUser));
             }
           }
         } catch (error) {
           console.error("Error in authentication process:", error);
           setError("Failed to load user data");
           // Ensure we have at least minimal user data
-          const minimalUser = { token: localStorage.getItem('authToken') };
+          const token = sessionStorage.getItem('authToken');
+          const minimalUser = createMinimalUserFromToken(token);
           setCurrentUser(minimalUser);
-          localStorage.setItem('user', JSON.stringify(minimalUser));
+          sessionStorage.setItem('user', JSON.stringify(minimalUser));
         }
       } else {
         console.log('User is not authenticated');
@@ -119,8 +157,23 @@ export const AuthProvider = ({ children }) => {
         // Use the user data from the login response if available
         if (response.data && response.data.user) {
           console.log('User data found in login response:', response.data.user);
-          setCurrentUser(response.data.user);
-          localStorage.setItem('user', JSON.stringify(response.data.user));
+          // Ensure user_id is available (handle both id and user_id from API)
+          const userData = {
+            ...response.data.user,
+            user_id: response.data.user.user_id || response.data.user.id
+          };
+          setCurrentUser(userData);
+          sessionStorage.setItem('user', JSON.stringify(userData));
+        } else if (response.data && response.data.user_id) {
+          // Handle case where user_id is returned directly in login response
+          console.log('User ID found in login response:', response.data.user_id);
+          const userData = {
+            user_id: response.data.user_id,
+            token: response.data.access_token,
+            fullName: 'User' // Will be updated when we fetch full user data
+          };
+          setCurrentUser(userData);
+          sessionStorage.setItem('user', JSON.stringify(userData));
         } else {
           // Otherwise fetch it separately
           console.log('Fetching user data from API...');
@@ -129,17 +182,22 @@ export const AuthProvider = ({ children }) => {
           
           if (userData && userData.data) {
             console.log('Setting user data:', userData.data);
-            setCurrentUser(userData.data);
-            // Store user data in localStorage for persistence
-            localStorage.setItem('user', JSON.stringify(userData.data));
+            // Ensure user_id is available (handle both id and user_id from API)
+            const userDataFormatted = {
+              ...userData.data,
+              user_id: userData.data.user_id || userData.data.id
+            };
+            setCurrentUser(userDataFormatted);
+            // Store user data in sessionStorage for persistence
+            sessionStorage.setItem('user', JSON.stringify(userDataFormatted));
           } else {
             console.error("Failed to fetch user data after login");
             // Create a minimal user object from the token if we have to
             if (response.data && response.data.access_token) {
               console.log('Creating minimal user object from token');
-              const minimalUser = { token: response.data.access_token };
+              const minimalUser = createMinimalUserFromToken(response.data.access_token);
               setCurrentUser(minimalUser);
-              localStorage.setItem('user', JSON.stringify(minimalUser));
+              sessionStorage.setItem('user', JSON.stringify(minimalUser));
             }
           }
         }
@@ -149,9 +207,9 @@ export const AuthProvider = ({ children }) => {
         // Just create a minimal user object from the token
         if (response.data && response.data.access_token) {
           console.log('Creating minimal user object from token after error');
-          const minimalUser = { token: response.data.access_token };
+          const minimalUser = createMinimalUserFromToken(response.data.access_token);
           setCurrentUser(minimalUser);
-          localStorage.setItem('user', JSON.stringify(minimalUser));
+          sessionStorage.setItem('user', JSON.stringify(minimalUser));
         }
       }
 

@@ -42,6 +42,16 @@ interface CellSelectionProps {
 const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   
     const { currentUser } = useAuth();
+    
+    // Debug current user data
+    console.log('Current user in pay.tsx:', currentUser);
+    
+    // Ensure we have a valid user_id
+    const userId = currentUser?.user_id || currentUser?.id;
+    if (!userId && currentUser) {
+      console.warn('User is authenticated but user_id is missing:', currentUser);
+    }
+    
     // const { store } = useData();
   // State for selected cells
   const [selectedCells, setSelectedCells] = useState<number[]>([]);
@@ -79,8 +89,13 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   
   // Get chit users data from the store
   const chitUsersData = useDynamicApiStore('chitUsers', { 
-    params: currentUser?.user_id ? [currentUser.user_id] : [], 
+    params: userId ? [userId] : [], 
   });
+  
+  // Show error if user is authenticated but user_id is missing
+  if (currentUser && !userId) {
+    console.error('User is authenticated but user_id is missing. This indicates an authentication issue.');
+  }
   
   // Access the full store for debugging and get loading/error states
   const { store } = useData();
@@ -164,7 +179,37 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         });
         return prev;
       }
-      const cellAdded = [...prev, cellNumber].sort((a, b) => a - b);
+      let cellAdded = [...prev, cellNumber].sort((a, b) => a - b);
+      cellAdded = cellAdded.filter(cell => !paidWeeks.includes(cell)).sort((a, b) => a - b);
+      
+      // Check if there's a gap between paid weeks and new cells
+      if (paidWeeks.length > 0 && cellAdded.length > 0) {
+        const maxPaidWeek = Math.max(...paidWeeks);
+        const minNewCell = Math.min(...cellAdded);
+        // If there's a gap (not continuous), prevent selection
+        if (maxPaidWeek + 1 < minNewCell) {
+          setNotification({
+            open: true,
+            message: `Not allow random weeks selection`,
+            severity: 'warning'
+          });
+          return prev;
+        }
+      }
+      
+      // Check if the new cells themselves are continuous
+      if (cellAdded.length > 1) {
+        for (let i = 1; i < cellAdded.length; i++) {
+          if (cellAdded[i] !== cellAdded[i - 1] + 1) {
+            setNotification({
+              open: true,
+              message: `Not allow random weeks selection`,
+              severity: 'warning'
+            });
+            return prev;
+          }
+        }
+      }
       if (cellAdded?.length > 0) {
         setCalendarSelection(true);
       }
@@ -319,12 +364,13 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // Get the first chit from the list (assuming we're paying for the selected chit)
       const selectedChit = chitSelectId ? chitSelectId : chitList.length > 0 ? chitList[0].chit_no : null;
       
-      if (!selectedChit || !currentUser) {
+      if (!selectedChit || !currentUser || !userId) {
         setNotification({
           open: true,
           message: 'Missing chit or user information',
           severity: 'error'
         });
+        console.error('Payment validation failed:', { selectedChit, currentUser, userId });
         return;
       }
       
@@ -351,7 +397,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       const paymentPromises = filterWeek.map(async (week) => {
         // Prepare backend payment request data for this week
         const backendPayload = {
-          user_id: currentUser.user_id,
+          user_id: userId,
           chit_no: parseInt(selectedChit),
           amount: amountPerWeek, // Divide amount among weeks
           week_no: week,
@@ -661,7 +707,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               alreadyBaseAmount={handleDisableBaseAmount}
               selectWeek={selectWeek}
               maxSelection={MAX_SELECTIONS}
-              currentUserId={currentUser?.user_id || 0}
+              currentUserId={userId || 0}
             />
           )}
         </Box>
