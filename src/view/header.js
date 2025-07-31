@@ -8,6 +8,7 @@ import '../i18n';
 import logo from '../assets/images/SM_LOGO.webp';
 import routes from '../route';
 import { useAuth } from '../context/AuthContext';
+import { hasPermission, getDefaultRole } from '../utils/role-utils';
 
 function Header() {
   const { t } = useTranslation();
@@ -27,6 +28,16 @@ function Header() {
         return getLinks(route.collapse);
       }
       if (route.route && route.canView && isAuthenticated()) {
+        // Check if user has permission to view this route
+        if (route.allowedRoles && currentUser) {
+          const userRole = currentUser.role || getDefaultRole();
+          const userHasPermission = hasPermission(userRole, route.allowedRoles);
+          
+          if (!userHasPermission) {
+            return null; // Don't show the navigation item
+          }
+        }
+        
         return (
           <li className="nav-item" key={route.key}>
             <Link className="nav-link text-info" to={route.route}>{route.name}</Link>

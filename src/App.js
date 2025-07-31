@@ -14,7 +14,10 @@ import ForgotPassword from './pages/forgot-password';
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/applicationData.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleBasedRoute from './components/RoleBasedRoute';
 import DebugButton from './components/DebugButton';
+import RoleDebugInfo from './components/RoleDebugInfo';
+import RoleTestComponent from './components/RoleTestComponent';
 import { performCorsCheck } from './utils/cors-check';
 import { initializeDebugHelpers } from './utils/debug-helpers';
 
@@ -59,14 +62,22 @@ function App() {
                 )
               ))}
 
-              {/* Protected routes */}
+              {/* Protected routes with role-based access */}
               <Route element={<ProtectedRoute />}>
                 {authRoutes.map((route) => (
                   route.route && (
                     <Route
                       exact
                       path={route.route}
-                      element={route.element}
+                      element={
+                        route.allowedRoles ? (
+                          <RoleBasedRoute allowedRoles={route.allowedRoles}>
+                            {route.element}
+                          </RoleBasedRoute>
+                        ) : (
+                          route.element
+                        )
+                      }
                       key={route.key}
                     />
                   )
@@ -81,8 +92,10 @@ function App() {
             </Routes>
           </main>
           
-          {/* Debug Button - only shows in development mode */}
-          <DebugButton />
+          {/* Debug components - only show in development mode */}
+          {/* <DebugButton /> */}
+          {/* <RoleDebugInfo /> */}
+          {/* <RoleTestComponent /> */}
         </div>
       </DataProvider>
     </AuthProvider>

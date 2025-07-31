@@ -6,6 +6,7 @@ import TransactionHistory from "./pages/transactionhistory";
 import Register from './pages/register';
 import Login from './pages/login';
 import ForgotPassword from './pages/forgot-password';
+import { ROUTE_PERMISSIONS } from './utils/role-utils';
 
 const routes = [
     {
@@ -16,6 +17,7 @@ const routes = [
       route: "/dashboard",
       element: < Dashboard />,
       canView: true,
+      allowedRoles: ROUTE_PERMISSIONS.DASHBOARD, // All roles can access dashboard
     },
     {
       type: "collapse",
@@ -25,6 +27,7 @@ const routes = [
       route: "/pay",
       element: <Pay />,
       canView: true,
+      allowedRoles: ROUTE_PERMISSIONS.PAY, // Only customers can access payment page
     },
     {
       type: "collapse",
@@ -34,6 +37,7 @@ const routes = [
       route: "/transactionhistory",
       element: <TransactionHistory />,
       canView: true,
+      allowedRoles: ROUTE_PERMISSIONS.TRANSACTION_HISTORY, // All roles can view transaction history
     },
     {
       type: "collapse",

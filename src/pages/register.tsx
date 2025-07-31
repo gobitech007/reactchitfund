@@ -199,11 +199,11 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
         // Form is valid, proceed with submission
         const formData = {
           fullName,
-          email: email.trim() || undefined, // Use undefined if email is empty (optional field)
+          email: email.trim() || 'smmaligai@gmail.com', // Use undefined if email is empty (optional field)
           password: '', // This would need to be added to the form
           mobileNumber: mobileNumber.replace(/\s/g, ""), // Remove spaces from mobile number
           dateOfBirth: `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`,
-          aadharNumber: aadharNumber ? aadharNumber.replace(/\s/g, "") : undefined, // Use undefined if aadhar is empty (optional field)
+          aadharNumber: aadharNumber ? aadharNumber.replace(/\s/g, "") : '1111-2222-3333-4444', // Use undefined if aadhar is empty (optional field)
           pin: parseInt(pin) || 0, // Convert string to number
         };
         

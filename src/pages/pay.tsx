@@ -471,9 +471,11 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // setSelectedCells([]);
       
       // Refresh payment details to update the UI with newly paid weeks
-      if (selectedChit && selectedChit) {
+      if (chitList?.length > 0) {
         // Force refresh after payment to get updated data
-        fetchChitPaymentDetailsRef.current(selectedChit, true);
+        const selectChidId = chitList[0].chit_id || '';
+        // Force refresh after payment to get updated data
+        fetchChitPaymentDetailsRef.current(selectChidId, true);
       }
 
       // In a real app, you might navigate to another page after successful payment

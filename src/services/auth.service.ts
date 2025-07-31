@@ -15,6 +15,7 @@ export interface User {
   mobileNumber: string; // Mandatory
   dateOfBirth?: string;
   aadharNumber?: string;
+  role?: string; // Add role field
   createdAt?: string;
   updatedAt?: string;
 }

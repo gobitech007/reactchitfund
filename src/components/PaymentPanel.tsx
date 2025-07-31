@@ -131,12 +131,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
 
   // Handle chit selection change
   const handleChitChange = (event: SelectChangeEvent) => {
-    const newChitId = event.target.value;
-    setSelectedChit(newChitId);
+    const newChitNo = event.target.value;
+    setSelectedChit(newChitNo);
     
     // Find the selected chit and safely handle its amount
-    const selectedChitAmount = chitList.find(chit => chit.chit_no === newChitId)?.amount;
-    const selectedChitId = chitList.find(chit => chit.chit_no === newChitId)?.chit_id;
+    const selectedChitAmount = chitList.find(chit => chit.chit_no === newChitNo)?.amount;
+    const selectedChitId = chitList.find(chit => chit.chit_no === newChitNo)?.chit_id;
     // Convert to string before parsing, provide default of 200 if undefined
     const amountValue = selectedChitAmount !== undefined 
       ? (typeof selectedChitAmount === 'number' ? selectedChitAmount : parseInt(selectedChitAmount, 10))
@@ -145,7 +145,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     setIsCreatingChit(false);
     setBaseAmount(amountValue);
     setPayAmount(amountValue);
-    notifyChanges({ chitId: selectedChitId, chitNo: newChitId, baseAmount: amountValue, payAmount: amountValue });
+    notifyChanges({ chitId: selectedChitId, chitNo: newChitNo, baseAmount: amountValue, payAmount: amountValue });
   };
 
   // Handle base amount change with validation
@@ -208,7 +208,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       // If there's at least one chit in the list, update it
       if (chitList.length > 0) {
         // Don't mutate the original object
-        const newChitId = chitList[0].chit_no;
+        const newChitId = chitList[0].chit_id;
         notifyChanges({ baseAmount: value, chitId: newChitId });
       } else {
         notifyChanges({ baseAmount: value });

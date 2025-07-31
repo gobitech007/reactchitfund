@@ -7,6 +7,7 @@ import tokenService from '../services/token.service';
 const createMinimalUserFromToken = (token) => {
   let user_id = null;
   let email = null;
+  let role = null;
   try {
     if (token) {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -14,7 +15,9 @@ const createMinimalUserFromToken = (token) => {
       email = payload.sub;
       // Try to get user_id if it exists in payload, otherwise we'll need to fetch it
       user_id = payload.user_id || payload.id;
-      console.log('Token payload:', { email, user_id, exp: payload.exp });
+      // Try to get role from token payload
+      role = payload.role;
+      console.log('Token payload:', { email, user_id, role, exp: payload.exp });
     }
   } catch (e) {
     console.warn('Could not parse token payload:', e);
@@ -24,7 +27,8 @@ const createMinimalUserFromToken = (token) => {
     token: token,
     user_id: user_id,
     email: email,
-    fullName: 'User' // Fallback name
+    fullName: 'User', // Fallback name
+    role: role || 'customer' // Default to customer role
   };
 };
 
@@ -84,8 +88,10 @@ export const AuthProvider = ({ children }) => {
               // Ensure user_id is available (handle both id and user_id from API)
               const userData = {
                 ...userResponse.data,
-                user_id: userResponse.data.user_id || userResponse.data.id
+                user_id: userResponse.data.user_id || userResponse.data.id,
+                role: userResponse.data.role || 'customer' // Ensure role is set
               };
+              console.log('Final user data with role:', userData);
               setCurrentUser(userData);
               // Update sessionStorage with fresh data
               sessionStorage.setItem('user', JSON.stringify(userData));
@@ -160,8 +166,10 @@ export const AuthProvider = ({ children }) => {
           // Ensure user_id is available (handle both id and user_id from API)
           const userData = {
             ...response.data.user,
-            user_id: response.data.user.user_id || response.data.user.id
+            user_id: response.data.user.user_id || response.data.user.id,
+            role: response.data.user.role || 'customer' // Ensure role is set
           };
+          console.log('Login: Setting user data with role:', userData);
           setCurrentUser(userData);
           sessionStorage.setItem('user', JSON.stringify(userData));
         } else if (response.data && response.data.user_id) {
