@@ -593,6 +593,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
           .filter(cell => cell.is_paid === 'Y')
           .map(cell => cell.week)));
         setDisabledCells(newDisabledCells);
+        setChitSelectId(chitId);
       }
     } catch (error) {
       // console.error('Error fetching chit payment details:', error);

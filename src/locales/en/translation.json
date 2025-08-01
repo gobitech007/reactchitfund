@@ -16,7 +16,13 @@
     "error": "Error",
     "retry": "Retry",
     "view": "View",
-    "close": "Close"
+    "close": "Close",
+    "clear": "Clear",
+    "all": "All",
+    "refresh": "Refresh",
+    "export": "Export",
+    "print": "Print",
+    "more": "More"
   },
   "navigation": {
     "home": "Home",
@@ -132,6 +138,7 @@
     "week": "Week",
     "columns": {
       "transactionId": "Transaction ID",
+      "user": "User",
       "chitInfo": "Chit Info",
       "date": "Date",
       "amount": "Amount",
@@ -142,13 +149,45 @@
     "status": {
       "completed": "Completed",
       "pending": "Pending",
-      "failed": "Failed"
+      "failed": "Failed",
+      "refunded": "Refunded"
+    },
+    "filters": {
+      "title": "Filters",
+      "user": "Select User",
+      "chit": "Select Chit",
+      "status": "Status",
+      "paymentMethod": "Payment Method",
+      "dateFrom": "From Date",
+      "dateTo": "To Date",
+      "amountMin": "Min Amount",
+      "amountMax": "Max Amount",
+      "selectUserFirst": "Select a user first to see their chits"
     },
     "paymentMethod": {
       "card": "Card",
-      "UPI": "UPI",
-      "netbanking": "Net Banking",
+      "credit_card": "Credit Card",
+      "debit_card": "Debit Card",
+      "upi": "UPI",
+      "net_banking": "Net Banking",
+      "wallet": "Wallet",
       "cash": "Cash"
+    },
+    "summary": {
+      "title": "Transaction Summary",
+      "totalTransactions": "Total Transactions",
+      "totalAmount": "Total Amount",
+      "averageAmount": "Average Amount",
+      "successRate": "Success Rate",
+      "pendingAmount": "Pending Amount"
+    },
+    "actions": {
+      "emailReport": "Email Report"
+    },
+    "export": {
+      "title": "Export Transactions",
+      "description": "Export {{count}} transactions to your preferred format",
+      "filters": "Applied Filters"
     }
   }
 }

@@ -27,7 +27,7 @@ export interface IPaymentService {
   validateUpiId: (upiId: string) => { isValid: boolean; error?: string };
   getChitUsers: (user_id: string) => Promise<ApiResponse<{ status: PaymentStatus }>>;
   getChitPaymentDetails: (chit_id: string) => Promise<ApiResponse<CellData[]>>;
-  getTransactionHistoryPage: (params: { skip?: number, limit?: number }) => Promise<ApiResponse<any>>;
+  getTransactionHistoryPage: (params: { skip?: number, limit?: number,user_id?: string }) => Promise<ApiResponse<any>>;
   createChitUsers: (chitUsers: Partial<ChitListItem>) => Promise<ApiResponse<ChitListItem>>;
   processChitPayment: (paymentData: any) => Promise<ApiResponse<Transaction>>;
 }
@@ -235,11 +235,12 @@ export const PaymentService: IPaymentService = {
     }
     return await ApiService.get<CellData[]>(`/payments/chit_users/${chit_id}/pay_details/`);
   },
-  getTransactionHistoryPage: async(params: { skip?: number, limit?: number }) => {
+  getTransactionHistoryPage: async(params: { skip?: number, limit?: number,user_id?: string }) => {
       // Convert numeric parameters to strings as required by ApiService
       const stringParams: Record<string, string> = {};
       if (params.skip !== undefined) stringParams.skip = params.skip.toString();
       if (params.limit !== undefined) stringParams.limit = params.limit.toString();      
+      if (params.user_id !== undefined) stringParams.user_id = params.user_id.toString();      
       return await ApiService.get('/payments/transaction-history/', stringParams);
   },
 

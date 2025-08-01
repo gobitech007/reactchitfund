@@ -187,7 +187,7 @@ export const validateDateOfBirth = (
     if (dayNum || monthNum || yearNum) {
       return { isValid: false, error: "Please complete the date of birth" };
     }
-    return { isValid: true, error: "" }; // All empty is valid (if not required)
+    return { isValid: true, error: "" }; // All empty is valid (date of birth is optional)
   }
   
   // Check if the date is valid
@@ -341,6 +341,21 @@ export interface FormData {
   dateOfBirth: string;
   aadharNumber: string;
 }
+
+/**
+ * Generates a random 12-digit Aadhar number
+ * @returns A randomly generated 12-digit Aadhar number as a string
+ */
+export const generateRandomAadhar = (): string => {
+  // Generate 12 random digits
+  let aadhar = '';
+  for (let i = 0; i < 12; i++) {
+    aadhar += Math.floor(Math.random() * 10).toString();
+  }
+  
+  // Format with spaces (XXXX XXXX XXXX)
+  return aadhar.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+};
 
 export const handleEmptyInput = (): RegisterState => {
   return {

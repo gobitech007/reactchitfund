@@ -137,6 +137,55 @@ export const UserService = {
    */
   createUser: async (userData: RegisterRequest) => {
     return await ApiService.post<User>('/users', userData);
+  },
+
+  /**
+   * Get all users (admin/manager only)
+   * @param page - Page number for pagination
+   * @param limit - Number of items per page
+   * @param search - Search term for filtering users
+   * @returns Promise with users list
+   */
+  getAllUsers: async (page: number = 1, limit: number = 100, search?: string) => {
+    const params: Record<string, string> = {
+      page: page.toString(),
+      limit: limit.toString()
+    };
+    
+    if (search) {
+      params.search = search;
+    }
+    
+    return await ApiService.get('/users', params);
+  },
+
+  /**
+   * Get user's chits
+   * @param userId - User ID
+   * @returns Promise with user's chits
+   */
+  getUserChits: async (userId: string) => {
+    return await ApiService.get(`/users/${userId}/chits`);
+  },
+
+  /**
+   * Get user's transaction history with filters
+   * @param userId - User ID
+   * @param filters - Filter parameters
+   * @returns Promise with filtered transactions
+   */
+  getUserTransactions: async (userId: string, filters?: any) => {
+    const params: Record<string, string> = {};
+    
+    if (filters?.chitId) params.chit_id = filters.chitId;
+    if (filters?.status) params.status = filters.status;
+    if (filters?.paymentMethod) params.payment_method = filters.paymentMethod;
+    if (filters?.dateFrom) params.date_from = filters.dateFrom;
+    if (filters?.dateTo) params.date_to = filters.dateTo;
+    if (filters?.amountMin) params.amount_min = filters.amountMin.toString();
+    if (filters?.amountMax) params.amount_max = filters.amountMax.toString();
+    
+    return await ApiService.get(`/users/${userId}/transactions`, params);
   }
 };
 

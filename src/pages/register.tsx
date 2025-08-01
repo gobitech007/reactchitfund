@@ -23,7 +23,7 @@ import BadgeIcon from "@mui/icons-material/Badge";
 
 import { validateEmail, formatMobileNumber, validateAadharNumber, formatAadharNumber, validateFullName,
     getDays, getMonths, getYears, RegisterProps, RegisterState, validateDateOfBirth,
-    handleEmptyInput } from "../utils/form-utils";
+    handleEmptyInput, generateRandomAadhar } from "../utils/form-utils";
 import { withNavigation } from "../utils/withNavigation";
 import { withTranslation } from "../utils/withTranslation";
 import '../i18n';
@@ -43,7 +43,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
    * The state includes fields for user input such as fullName, email, mobileNumber,
    * birthDay, birthMonth, birthYear, aadharNumber, and an errors object for validation errors.
    */
-
+  
   constructor(props: RegisterPropsWithTranslation) {
     super(props);
     this.state = this.noData;
@@ -57,7 +57,8 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
 
     switch (name) {
       case "fullName":
-        errors.fullName = validateFullName(value as string) ? "" : (value as string).length < 3 ? "Full Name must be at least 3 characters" : "";
+        const fullNameValidation = validateFullName(value as string);
+        errors.fullName = fullNameValidation.isValid ? "" : fullNameValidation.error;
         break;
       case "email":
         // Only validate email if it's not empty (since it's optional)
@@ -114,13 +115,10 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
       errors,
     } = this.state;
 
-    // Check if all required fields are filled (email and aadhar are now optional)
+    // Check if all required fields are filled (email, aadhar, and date of birth are now optional)
     if (
       !fullName ||
       !mobileNumber ||
-      !birthDay ||
-      !birthMonth ||
-      !birthYear ||
       !pin
     ) {
       return false;
@@ -159,19 +157,29 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
     } = this.state;
     let valid = true;
 
-    // Validate date of birth
-    const dateValidation = validateDateOfBirth(birthDay, birthMonth, birthYear);
-    if (!dateValidation.isValid) {
-      valid = false;
-      // Update the dateOfBirth error in state
-      this.setState({
-        errors: {
-          ...this.state.errors,
-          dateOfBirth: dateValidation.error
-        }
-      });
+    // Validate date of birth only if any part is provided (since it's now optional)
+    if (birthDay || birthMonth || birthYear) {
+      const dateValidation = validateDateOfBirth(birthDay, birthMonth, birthYear);
+      if (!dateValidation.isValid) {
+        valid = false;
+        // Update the dateOfBirth error in state
+        this.setState({
+          errors: {
+            ...this.state.errors,
+            dateOfBirth: dateValidation.error
+          }
+        });
+      } else {
+        // Clear any previous date of birth errors
+        this.setState({
+          errors: {
+            ...this.state.errors,
+            dateOfBirth: ""
+          }
+        });
+      }
     } else {
-      // Clear any previous date of birth errors
+      // Clear any previous date of birth errors if all fields are empty
       this.setState({
         errors: {
           ...this.state.errors,
@@ -190,20 +198,19 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
       valid &&
       fullName &&
       mobileNumber &&
-      birthDay &&
-      birthMonth &&
-      birthYear &&
       pin
     ) {
       try {
         // Form is valid, proceed with submission
         const formData = {
           fullName,
-          email: email.trim() || 'smmaligai@gmail.com', // Use undefined if email is empty (optional field)
+          email: email.trim() || `smmaligaii${new Date().getMilliseconds() + new Date().getHours()}${new Date().getMinutes()}}@gmail.com`, // Use default if email is empty (optional field)
           password: '', // This would need to be added to the form
           mobileNumber: mobileNumber.replace(/\s/g, ""), // Remove spaces from mobile number
-          dateOfBirth: `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`,
-          aadharNumber: aadharNumber ? aadharNumber.replace(/\s/g, "") : '1111-2222-3333-4444', // Use undefined if aadhar is empty (optional field)
+          dateOfBirth: (birthDay && birthMonth && birthYear) 
+            ? `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}` 
+            : '1990-01-01', // Use default date if date of birth is not provided (optional field)
+          aadharNumber: aadharNumber ? aadharNumber.replace(/\s/g, "") : generateRandomAadhar().replace(/\s/g, ""), // Use random generated aadhar if empty (optional field)
           pin: parseInt(pin) || 0, // Convert string to number
         };
         
@@ -222,7 +229,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
           alert(`Registration failed: ${response.error}`);
         } else {
           console.log("Registration successful! Please login with your credentials.");
-
+          alert("Registration successful! Please login with your credentials.");
           // Navigate to login page after successful registration
           if (this.props.navigate) {
             this.props.navigate('/login');
@@ -396,7 +403,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                   gutterBottom
                   sx={{ display: "flex", alignItems: "center" }}
                 >
-                  <CakeIcon sx={{ mr: 1 }} /> {t('auth.dateOfBirth')}
+                  <CakeIcon sx={{ mr: 1 }} /> {t('auth.dateOfBirth')} ({t('auth.optional')})
                 </Typography>
               </Grid>
 
@@ -404,7 +411,6 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                 <FormControl
                   fullWidth
                   error={errors.dateOfBirth !== ""}
-                  required
                 >
                   <InputLabel id="birth-day-label">{t('time.day')}</InputLabel>
                   <Select
@@ -428,7 +434,6 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                 <FormControl
                   fullWidth
                   error={errors.dateOfBirth !== ""}
-                  required
                 >
                   <InputLabel id="birth-month-label">{t('time.month')}</InputLabel>
                   <Select
@@ -452,7 +457,6 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
                 <FormControl
                   fullWidth
                   error={errors.dateOfBirth !== ""}
-                  required
                 >
                   <InputLabel id="birth-year-label">{t('time.year')}</InputLabel>
                   <Select
