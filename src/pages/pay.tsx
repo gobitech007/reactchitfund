@@ -44,7 +44,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     const { currentUser } = useAuth();
     
     // Debug current user data
-    console.log('Current user in pay.tsx:', currentUser);
+    // console.log('Current user in pay.tsx:', currentUser);
     
     // Ensure we have a valid user_id
     const userId = currentUser?.user_id || currentUser?.id;
@@ -76,9 +76,15 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   // State for payment modal
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
+  // State for base amount modal
+  const [baseAmountModalOpen, setBaseAmountModalOpen] = useState(false);
+  const [baseAmountValue, setBaseAmountValue] = useState<number>(200);
+  const [baseAmountError, setBaseAmountError] = useState<string>('');
+  const [pendingChitData, setPendingChitData] = useState<Array<ChitItem> | null>(null);
+
   // State for payment form data
   const [paymentData, setPaymentData] = useState<PaymentFormData>({
-    amount: 200,
+    amount: baseAmountValue,
     paymentMethod: 'credit_card',
   });
 
@@ -87,9 +93,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
 
   // State for available chit list
   
+  // Add retry count state for triggering refetch
+  const [retryCount, setRetryCount] = useState(0);
+
   // Get chit users data from the store
   const chitUsersData = useDynamicApiStore('chitUsers', { 
-    params: userId ? [userId] : [], 
+    params: userId ? [userId, retryCount] : [retryCount], 
   });
   
   // Show error if user is authenticated but user_id is missing
@@ -103,6 +112,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const isLoading = store['chitUsersLoading'] as boolean;
   const error = store['chitUsersError'] as string | null;
   const [chitList, setChitList] = useState<ChitListItem[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   
   // Process chitUsersData when it changes
@@ -113,18 +123,33 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // Type assertion for the API data
       const typedChitData = chitUsersData as Array<ChitItem>;
       
+      // Check if any chit has null amount
+      const chitWithNullAmount = typedChitData.find(chit => chit.amount === null || chit.amount === undefined);
+      
+      if (chitWithNullAmount) {
+        // Store the pending data and show base amount modal
+        setPendingChitData(typedChitData);
+        setBaseAmountModalOpen(true);
+        return; // Don't process the data yet
+      }
+      
       const formattedChitList: ChitListItem[] = typedChitData.map(chit => ({
         chit_no: chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
-        name: `Weekly Chit ${chit.chit_no}- ₹${chit.amount || '200'}`,
-        amount: `${chit.amount || '200'}`,
+        name: `Weekly Chit ${chit.chit_no}- ₹${chit.amount || baseAmountValue}`,
+        amount: `${chit.amount || baseAmountValue}`,
         chit_id: chit.chit_id,
       }));
       
-      if (formattedChitList.length > 0) {
-        setChitList(formattedChitList);
-      }
+      console.log('Formatted chit list:', formattedChitList);
+      setChitList(formattedChitList);
+      setIsInitialLoad(false);
+    } else if (!isLoading && !error && isInitialLoad) {
+      // If we're not loading, no error, but still on initial load and no data
+      // This might indicate an empty result or authentication issue
+      console.warn('No chit data received. User ID:', userId, 'Current User:', currentUser);
+      setIsInitialLoad(false);
     }
-  }, [chitUsersData]);
+  }, [chitUsersData, isLoading, error, isInitialLoad, userId, currentUser]);
   
   // Handle fetching payment details when chitList or disabledCells change
   useEffect(() => {
@@ -224,6 +249,38 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     console.log('Selected cells updated:', selectedCells);
   }, [selectedCells]);
 
+  // Debug useEffect to track data loading states
+  useEffect(() => {
+    console.log('Pay page state:', {
+      isLoading,
+      error,
+      isInitialLoad,
+      chitUsersData: chitUsersData ? 'Data available' : 'No data',
+      chitListLength: chitList.length,
+      userId,
+      currentUser: currentUser ? 'User available' : 'No user'
+    });
+  }, [isLoading, error, isInitialLoad, chitUsersData, chitList.length, userId, currentUser]);
+
+  // Handle authentication delay on page reload
+  useEffect(() => {
+    // If we don't have a user ID but we have a current user, try to extract it
+    if (!userId && currentUser && isInitialLoad) {
+      console.log('Attempting to extract user ID from current user on reload:', currentUser);
+      // This will trigger a re-render and potentially refetch data
+    }
+    
+    // Set a timeout to handle cases where authentication is taking too long
+    const authTimeout = setTimeout(() => {
+      if (isInitialLoad && !chitUsersData && !isLoading && !error) {
+        console.warn('Authentication or data loading timeout, attempting retry...');
+        setRetryCount(prev => prev + 1);
+      }
+    }, 5000); // 5 second timeout
+
+    return () => clearTimeout(authTimeout);
+  }, [userId, currentUser, isInitialLoad, chitUsersData, isLoading, error]);
+
   useEffect(() => { 
     const paidCellsWeek = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
     setSelectWeek(paidCellsWeek);
@@ -257,6 +314,62 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   // Handle payment modal close
   const handlePaymentModalClose = () => {
     setPaymentModalOpen(false);
+  };
+
+  // Handle base amount modal close
+  const handleBaseAmountModalClose = () => {
+    setBaseAmountModalOpen(false);
+    setBaseAmountError('');
+    setPendingChitData(null);
+  };
+
+  // Handle base amount input change
+  const handleBaseAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    setBaseAmountValue(value);
+    
+    // Clear error if value is valid
+    if (value >= 200) {
+      setBaseAmountError('');
+    }
+  };
+
+  // Handle base amount submission
+  const handleBaseAmountSubmit = () => {
+    // Validate base amount
+    if (baseAmountValue < 200) {
+      setBaseAmountError('Base amount must be at least ₹200');
+      return;
+    }
+
+    if (!pendingChitData) {
+      setBaseAmountError('No chit data available');
+      return;
+    }
+
+    // Process the pending chit data with the provided base amount
+    const formattedChitList: ChitListItem[] = pendingChitData.map(chit => ({
+      chit_no: chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
+      name: `Weekly Chit ${chit.chit_no}- ₹${chit.amount || baseAmountValue}`,
+      amount: `${chit.amount || baseAmountValue}`,
+      chit_id: chit.chit_id,
+    }));
+
+    console.log('Formatted chit list with base amount:', formattedChitList);
+    setChitList(formattedChitList);
+    setIsInitialLoad(false);
+    
+    // Close modal and reset state
+    setBaseAmountModalOpen(false);
+    setBaseAmountError('');
+    setPendingChitData(null);
+    
+    // Show success notification
+    setNotification({
+      open: true,
+      message: `Base amount of ₹${baseAmountValue} has been set successfully`,
+      severity: 'success'
+    });
   };
 
   // Handle payment form input changes
@@ -633,7 +746,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   // }, []);
 
   // Handle payment panel value changes
-  const handlePaymentValuesChange = (values: {
+  const handlePaymentValuesChange = useCallback((values: {
     chitId: string;
     baseAmount: number;
     payAmount: number;
@@ -671,11 +784,19 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         amount: values.payAmount
       }));
     }
-  };
+  }, [calendarSelection, paidCells, fetchChitPaymentDetails]);
 
   const weekSelected = () => {
     const paidWeeks = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
     return selectedCells.filter(cellNumber => !paidWeeks.includes(cellNumber));
+  };
+
+  // Retry function to refetch data
+  const handleRetry = () => {
+    console.log('Retrying data fetch...');
+    setRetryCount(prev => prev + 1);
+    setIsInitialLoad(true);
+    setChitList([]); // Clear existing data
   };
 
   return (
@@ -683,9 +804,14 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mt: 4, mb: 4 }}>
         {/* Left Panel - Payment Panel */}
         <Box sx={{ width: { xs: '100%', md: '30%' } }}>
-          {isLoading ? (
+          {isLoading || isInitialLoad ? (
             <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body1">Loading chit data...</Typography>
+              {isInitialLoad && (
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                  Initializing payment system...
+                </Typography>
+              )}
             </Paper>
           ) : error ? (
             <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
@@ -696,9 +822,26 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
                 variant="outlined" 
                 color="primary" 
                 sx={{ mt: 2 }}
-                onClick={() => window.location.reload()}
+                onClick={handleRetry}
               >
                 Retry
+              </Button>
+            </Paper>
+          ) : chitList.length === 0 ? (
+            <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
+              <Typography variant="body1" color="textSecondary">
+                No chit data available
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                You may not be enrolled in any chit funds yet.
+              </Typography>
+              <Button 
+                variant="outlined" 
+                color="primary" 
+                sx={{ mt: 2 }}
+                onClick={handleRetry}
+              >
+                Refresh
               </Button>
             </Paper>
           ) : (
@@ -786,6 +929,80 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
           {notification.message}
         </Alert>
       </Snackbar>
+
+      {/* Base Amount Modal */}
+      <Modal
+        open={baseAmountModalOpen}
+        onClose={handleBaseAmountModalClose}
+        aria-labelledby="base-amount-modal-title"
+        aria-describedby="base-amount-modal-description"
+      >
+        <Paper
+          elevation={5}
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: { xs: '90%', sm: '70%', md: '40%' },
+            maxWidth: 500,
+            p: 4,
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}
+        >
+          <Typography id="base-amount-modal-title" variant="h5" component="h2" gutterBottom>
+            Set Base Amount
+          </Typography>
+
+          <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+            The chit fund requires a base amount to be set. Please enter an amount greater than ₹200, or a multiple of ₹100.
+          </Typography>
+
+          <Divider sx={{ mb: 3 }} />
+
+          <Box component="form" noValidate sx={{ mt: 1 }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="baseAmount"
+              label="Base Amount (₹)"
+              name="baseAmount"
+              type="number"
+              value={baseAmountValue}
+              onChange={handleBaseAmountChange}
+              error={!!baseAmountError}
+              helperText={baseAmountError || "Minimum amount is ₹200"}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                inputProps: { min: 200, step: 50 }
+              }}
+              sx={{ mb: 3 }}
+              autoFocus
+            />
+
+            <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                onClick={handleBaseAmountSubmit}
+                disabled={baseAmountValue < 200}
+              >
+                Set Base Amount
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleBaseAmountModalClose}
+              >
+                Cancel
+              </Button>
+            </Stack>
+          </Box>
+        </Paper>
+      </Modal>
 
       {/* Payment Modal */}
       <Modal

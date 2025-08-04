@@ -45,10 +45,22 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   currentUserId, // Required current user ID
   maxSelection
 }) => {
+  // Helper function to get default amount from chitList or fallback
+  const getDefaultAmount = useCallback((): number => {
+    if (chitList.length > 0) {
+      const firstChitAmount = chitList[0].amount;
+      const numericAmount = typeof firstChitAmount === 'string' 
+        ? parseInt(firstChitAmount, 10) 
+        : firstChitAmount;
+      return !isNaN(numericAmount) ? numericAmount : 200;
+    }
+    return 200; // Fallback only when no chits available
+  }, [chitList]);
+
   // State for form fields
   const [selectedChit, setSelectedChit] = useState<string>('');
-  const [baseAmount, setBaseAmount] = useState<number>(200);
-  const [payAmount, setPayAmount] = useState<number>(200);
+  const [baseAmount, setBaseAmount] = useState<number>(() => getDefaultAmount());
+  const [payAmount, setPayAmount] = useState<number>(() => getDefaultAmount());
   const [weekSelection, setWeekSelection] = useState<number>(1); // Default to 1 week
   const [error, setError] = useState<string | null>(null);
   const [showBaseAmountNoValidation, setShowBaseAmountNoValidation] = useState<boolean>(false);
@@ -64,17 +76,26 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     if (onChangeValues) {
       // Find the selected chit in the list to get its chit_id and chit_no
       const selectedChitItem = chitList.find(chit => chit.chit_no === (updates.chitNo || selectedChit));
+      const fromBaseAmount = selectedChitItem ? Number(selectedChitItem['amount']): null;
       
       // Use the chit_id from the selected chit if available, otherwise use the chit_no as fallback
-      const chitId = selectedChitItem?.chit_id || updates.chitId || selectedChit;
+      // Ensure chitId is always a string
+      const chitId = String(selectedChitItem?.chit_id || updates.chitId || selectedChit || '');
       
       // Use the chit_no from the selected chit, or fallback to the selectedChit value
-      const chitNo = updates.chitNo !== undefined ? updates.chitNo : (selectedChitItem?.chit_no || selectedChit);
+      // Ensure chitNo is always a string
+      const chitNo = String(updates.chitNo !== undefined ? updates.chitNo : (selectedChitItem?.chit_no || selectedChit || ''));
       
-      // Ensure we never pass NaN values
+      // Convert fromBaseAmount to number if it's a string, with proper fallback
+      const numericFromBaseAmount = fromBaseAmount !== null 
+        ? (typeof fromBaseAmount === 'string' ? parseInt(fromBaseAmount, 10) : fromBaseAmount)
+        : getDefaultAmount();
+      const safeFromBaseAmount = !isNaN(numericFromBaseAmount) ? numericFromBaseAmount : getDefaultAmount();
+      
+      // Ensure we never pass NaN values and always return numbers
       const safeBaseAmount = updates.baseAmount !== undefined 
-        ? (!isNaN(updates.baseAmount) ? updates.baseAmount : 200) 
-        : (!isNaN(baseAmount) ? baseAmount : 200);
+        ? (!isNaN(updates.baseAmount) ? updates.baseAmount : safeFromBaseAmount) 
+        : (!isNaN(baseAmount) ? baseAmount : safeFromBaseAmount);
       
       const safePayAmount = updates.payAmount !== undefined 
         ? (!isNaN(updates.payAmount) ? updates.payAmount : safeBaseAmount) 
@@ -88,8 +109,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         weekSelection: updates.weekSelection !== undefined ? updates.weekSelection : weekSelection
       });
     }
-  // Only include onChangeValues in the dependency array to prevent unnecessary recreations
-  }, [onChangeValues]);
+  // Only include onChangeValues and getDefaultAmount in the dependency array to prevent unnecessary recreations
+  }, [onChangeValues, getDefaultAmount]);
   
   // Update pay amount when base amount changes
   // Auto-select the chit if there's only one in the list
@@ -113,7 +134,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     if (Object.keys(updates).length > 1) {
       notifyChanges(updates);
     }
-  }, [chitList, selectedChit, notifyChanges]);
+  }, [chitList, selectedChit]); // Removed notifyChanges from dependencies
   
   // Handle selected cells changes separately
   useEffect(() => {
@@ -127,7 +148,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         }
       }
     }
-  }, [selectedCells, selectWeek, baseAmount, payAmount, notifyChanges]);
+  }, [selectedCells, selectWeek, baseAmount, payAmount]); // Removed notifyChanges from dependencies
 
   // Handle chit selection change
   const handleChitChange = (event: SelectChangeEvent) => {
@@ -137,10 +158,10 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     // Find the selected chit and safely handle its amount
     const selectedChitAmount = chitList.find(chit => chit.chit_no === newChitNo)?.amount;
     const selectedChitId = chitList.find(chit => chit.chit_no === newChitNo)?.chit_id;
-    // Convert to string before parsing, provide default of 200 if undefined
+    // Convert to string before parsing, provide default from getDefaultAmount if undefined
     const amountValue = selectedChitAmount !== undefined 
       ? (typeof selectedChitAmount === 'number' ? selectedChitAmount : parseInt(selectedChitAmount, 10))
-      : 200;
+      : getDefaultAmount();
     
     setIsCreatingChit(false);
     setBaseAmount(amountValue);
@@ -157,9 +178,10 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     if (showBaseAmountNoValidation && validation.isValid) {
       // Even in no validation mode, ensure we don't set NaN
       if (isNaN(value)) {
-        if (baseAmount !== 200) {
-          setBaseAmount(200);
-          notifyChanges({ baseAmount: 200 });
+        const defaultAmount = getDefaultAmount();
+        if (baseAmount !== defaultAmount) {
+          setBaseAmount(defaultAmount);
+          notifyChanges({ baseAmount: defaultAmount });
         }
       } else {
           setBaseAmount(value);
@@ -173,25 +195,27 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     
     // If empty or not a number, set to minimum
     if (isNaN(value) || value < 0) {
-      if (baseAmount !== 200) {
-        setBaseAmount(200);
-        notifyChanges({ baseAmount: 200 });
+      const defaultAmount = getDefaultAmount();
+      if (baseAmount !== defaultAmount) {
+        setBaseAmount(defaultAmount);
+        notifyChanges({ baseAmount: defaultAmount });
       }
       return;
     }
     
     // Validate for minimum amount
-    if (value < 200 && value >= 0) {
+    const minAmount = getDefaultAmount();
+    if (value < minAmount && value >= 0) {
       if (value !== baseAmount) {
         setBaseAmount(value);
-        setError('Base amount must be at least ₹200');
+        setError(`Base amount must be at least ₹${minAmount}`);
         notifyChanges({ baseAmount: value });
       }
       return;
     }
     
     // Validate for hundreds (200, 300, 400, etc.)
-    if (value % 100 !== 0 && value >= 200) {
+    if (value % 100 !== 0 && value >= minAmount) {
       const roundedValue = Math.floor(value / 100) * 100;
       if (roundedValue !== baseAmount) {
         setBaseAmount(roundedValue);
@@ -218,10 +242,11 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   };
   
   const validateBaseAmount = (amount: number) => {
-    const isValid = amount >= 200;
+    const minAmount = getDefaultAmount();
+    const isValid = amount >= minAmount;
     return {
       isValid,
-      error: isValid ? null : 'Base amount must be at least ₹200'
+      error: isValid ? null : `Base amount must be at least ₹${minAmount}`
     };
   };
   
@@ -319,7 +344,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     // If empty or not a number, set to base amount
     if (isNaN(value) || value < 0) {
       // Ensure baseAmount is also not NaN
-      const safeBaseAmount = !isNaN(baseAmount) ? baseAmount : 200;
+      const safeBaseAmount = !isNaN(baseAmount) ? baseAmount : getDefaultAmount();
       if (payAmount !== safeBaseAmount) {
         setPayAmount(safeBaseAmount);
         notifyChanges({ payAmount: safeBaseAmount });
