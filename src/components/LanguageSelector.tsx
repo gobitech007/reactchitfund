@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 const languages = [
   { code: 'ta', name: 'தமிழ்' },
   { code: 'en', name: 'English' },
-  { code: 'hi', name: 'हिंदी' }
+  // { code: 'hi', name: 'हिंदी' }
 ];
 
 const LanguageSelector: React.FC = () => {

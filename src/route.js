@@ -1,4 +1,5 @@
 import Icon from "@mui/material/Icon";
+import { useTranslation } from 'react-i18next';
 
 import Dashboard from "./pages/dashboard";
 import Pay from "./pages/pay";
@@ -8,10 +9,13 @@ import Login from './pages/login';
 import ForgotPassword from './pages/forgot-password';
 import { ROUTE_PERMISSIONS } from './utils/role-utils';
 
-const routes = [
+const useRoutes = () => {
+  const { t } = useTranslation();
+  
+  return [
     {
       type: "collapse",
-      name: "Dashboard",
+      name: t('navigation.dashboard'),
       key: "dashboard",
       icon: <Icon fontSize="small">dashboard</Icon>,
       route: "/dashboard",
@@ -21,7 +25,7 @@ const routes = [
     },
     {
       type: "collapse",
-      name: "Pay",
+      name: t('header.pay'),
       key: "pay",
       icon: <Icon fontSize="small">payment</Icon>,
       route: "/pay",
@@ -31,7 +35,7 @@ const routes = [
     },
     {
       type: "collapse",
-      name: "Transaction History",
+      name: t('transactionHistory.title'),
       key: "transactionhistory",
       icon: <Icon fontSize="small">history</Icon>,
       route: "/transactionhistory",
@@ -41,7 +45,7 @@ const routes = [
     },
     {
       type: "collapse",
-      name: "Register",
+      name: t('auth.register'),
       key: "register",
       icon: <Icon fontSize="small">person_add</Icon>,
       route: "/register",
@@ -50,7 +54,7 @@ const routes = [
     },
     {
       type: "collapse",
-      name: "Login",
+      name: t('auth.login'),
       key: "login",
       icon: <Icon fontSize="small">login</Icon>,
       route: "/login",
@@ -59,7 +63,7 @@ const routes = [
     },
     {
       type: "collapse",
-      name: "Forgot-password",
+      name: t('auth.forgotPassword'),
       key: "forgot-password",
       icon: <Icon fontSize="small">help_outline</Icon>,
       route: "/forgot-password",
@@ -67,4 +71,6 @@ const routes = [
       canView: false,
     },
   ];
-export default routes;
+};
+
+export default useRoutes;

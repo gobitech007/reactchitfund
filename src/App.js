@@ -5,7 +5,7 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
-import routes from './route';
+import useRoutes from './route';
 import './App.css';
 import Header from "./view/header";
 import Login from './pages/login';
@@ -22,6 +22,9 @@ import { performCorsCheck } from './utils/cors-check';
 import { initializeDebugHelpers } from './utils/debug-helpers';
 
 function App() {
+  // Get routes from the hook
+  const routes = useRoutes();
+  
   // Filter routes that require authentication (canView: true)
   const authRoutes = routes.filter(route => route.canView);
   // Filter routes that don't require authentication (canView: false)

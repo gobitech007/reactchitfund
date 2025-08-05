@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../components/LanguageSelector';
 import '../i18n';
 import logo from '../assets/images/SM_LOGO.webp';
-import routes from '../route';
+import useRoutes from '../route';
 import { useAuth } from '../context/AuthContext';
 import { hasPermission, getDefaultRole } from '../utils/role-utils';
 
@@ -14,6 +14,7 @@ function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { logout, isAuthenticated, currentUser, login } = useAuth();
+  const routes = useRoutes();
   // Make login function available globally for class components
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -57,7 +58,6 @@ function Header() {
   const handleLogout = () => {
     // Call the logout function from the auth context
     logout();
-    console.log('User logged out');
 
     // Use React Router's navigate function to redirect to login page
     navigate('/login');

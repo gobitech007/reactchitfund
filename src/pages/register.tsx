@@ -212,11 +212,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
             : '1990-01-01', // Use default date if date of birth is not provided (optional field)
           aadharNumber: aadharNumber ? aadharNumber.replace(/\s/g, "") : generateRandomAadhar().replace(/\s/g, ""), // Use random generated aadhar if empty (optional field)
           pin: parseInt(pin) || 0, // Convert string to number
-        };
-        
-        console.log("Registration form data:", formData);
-
-        console.log("Registration form submitted:", formData);
+        };        
 
         // Import AuthService dynamically to avoid circular dependencies
         const { AuthService } = await import('../services');

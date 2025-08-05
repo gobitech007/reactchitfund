@@ -34,12 +34,14 @@ import QRCodeComponent from '../components/QRCodeComponent';
 import { useAuth, useData, useDynamicApiStore } from '../context';
 import {PaymentService, ApiService} from '../services';
 import { CellData, ChitItem, PaymentData, PaymentFormData, PaymentMethod } from '../utils/interface-utils';
+import { useTranslation } from 'react-i18next';
 
 interface CellSelectionProps {
   navigate?: (path: string) => void;
 }
 
 const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
+  const { t } = useTranslation();
   
     const { currentUser } = useAuth();
     
@@ -135,7 +137,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       
       const formattedChitList: ChitListItem[] = typedChitData.map(chit => ({
         chit_no: chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
-        name: `Weekly Chit ${chit.chit_no}- ₹${chit.amount || baseAmountValue}`,
+        name: `${t('pay.weeklyChit')} ${chit.chit_no}- ₹${chit.amount || baseAmountValue}`,
         amount: `${chit.amount || baseAmountValue}`,
         chit_id: chit.chit_id,
       }));
@@ -189,7 +191,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       if (disabledCells.includes(cellNumber) || paidWeeks.includes(cellNumber)) {
         setNotification({
           open: true,
-          message: 'This week is already paid or not available',
+          message: t('pay.weekAlreadyPaidOrNotAvailable'),
           severity: 'warning'
         });
         return prev;
@@ -204,7 +206,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       if (prev.length >= MAX_SELECTIONS) {
         setNotification({
           open: true,
-          message: `You can only select up to ${MAX_SELECTIONS} weeks`,
+          message: t('pay.maxWeeksSelectionWarning', { max: MAX_SELECTIONS }),
           severity: 'warning'
         });
         return prev;
@@ -220,7 +222,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         if (maxPaidWeek + 1 < minNewCell) {
           setNotification({
             open: true,
-            message: `Not allow random weeks selection`,
+            message: t('pay.randomWeeksSelectionNotAllowed'),
             severity: 'warning'
           });
           return prev;
@@ -233,7 +235,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
           if (cellAdded[i] !== cellAdded[i - 1] + 1) {
             setNotification({
               open: true,
-              message: `Not allow random weeks selection`,
+              message: t('pay.randomWeeksSelectionNotAllowed'),
               severity: 'warning'
             });
             return prev;
@@ -352,19 +354,19 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   const handleBaseAmountSubmit = () => {
     // Validate base amount
     if (baseAmountValue < 200) {
-      setBaseAmountError('Base amount must be at least ₹200');
+      setBaseAmountError(t('pay.baseAmountMustBeAtLeast'));
       return;
     }
 
     if (!pendingChitData) {
-      setBaseAmountError('No chit data available');
+      setBaseAmountError(t('pay.noChitDataAvailableError'));
       return;
     }
 
     // Process the pending chit data with the provided base amount
     const formattedChitList: ChitListItem[] = pendingChitData.map(chit => ({
       chit_no: chit.chit_no || `chit-${Math.random().toString(36).substr(2, 9)}`,
-      name: `Weekly Chit ${chit.chit_no}- ₹${chit.amount || baseAmountValue}`,
+      name: `${t('pay.weeklyChit')} ${chit.chit_no}- ₹${chit.amount || baseAmountValue}`,
       amount: `${chit.amount || baseAmountValue}`,
       chit_id: chit.chit_id,
     }));
@@ -381,7 +383,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     // Show success notification
     setNotification({
       open: true,
-      message: `Base amount of ₹${baseAmountValue} has been set successfully`,
+      message: t('pay.baseAmountSetSuccessfully', { amount: baseAmountValue }),
       severity: 'success'
     });
   };
@@ -481,7 +483,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     if (!validatePaymentData()) {
       setNotification({
         open: true,
-        message: 'Please fix the validation errors before proceeding',
+        message: t('pay.fixValidationErrors'),
         severity: 'error'
       });
       return;
@@ -494,7 +496,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       if (!selectedChit || !currentUser || !userId) {
         setNotification({
           open: true,
-          message: 'Missing chit or user information',
+          message: t('pay.missingChitOrUserInfo'),
           severity: 'error'
         });
         console.error('Payment validation failed:', { selectedChit, currentUser, userId });
@@ -553,7 +555,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       if (failedPayments.length > 0) {
         setNotification({
           open: true,
-          message: `Some payments failed: ${failedPayments.map(r => r.error).join(', ')}`,
+          message: t('pay.somePaymentsFailed', { errors: failedPayments.map(r => r.error).join(', ') }),
           severity: 'error'
         });
         return;
@@ -566,7 +568,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         // Show error notification
         setNotification({
           open: true,
-          message: `Payment failed: ${responses[0].error}`,
+          message: t('pay.paymentFailed', { error: responses[0].error }),
           severity: 'error'
         });
         return;
@@ -578,7 +580,11 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // Show success notification with transaction ID
       setNotification({
         open: true,
-        message: `Successfully processed payment of ₹${paymentData.amount} for weeks: ${weeksToProcess.join(', ')}. Transaction ID: ${transactionId}`,
+        message: t('pay.paymentSuccessful', { 
+          amount: paymentData.amount, 
+          weeks: weeksToProcess.join(', '), 
+          transactionId: transactionId 
+        }),
         severity: 'success'
       });
       
@@ -613,7 +619,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // Show error notification
       setNotification({
         open: true,
-        message: `Payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: t('pay.paymentFailed', { error: error instanceof Error ? error.message : 'Unknown error' }),
         severity: 'error'
       });
     }
@@ -646,7 +652,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     // Show notification
     setNotification({
       open: true,
-      message: `Payment of ₹${data.payAmount} initiated for ${data.chitId}`,
+      message: t('pay.paymentInitiated', { amount: data.payAmount, chitId: data.chitId }),
       severity: 'info'
     });
   };
@@ -726,7 +732,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       // console.error('Error fetching chit payment details:', error);
       setNotification({
         open: true,
-        message: `Failed to load payment details: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: t('pay.failedToLoadPaymentDetails', { error: error instanceof Error ? error.message : 'Unknown error' }),
         severity: 'error'
       });
     } finally {
@@ -843,17 +849,17 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         <Box sx={{ width: { xs: '100%', md: '30%' } }}>
           {isLoading || isInitialLoad ? (
             <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body1">Loading chit data...</Typography>
+              <Typography variant="body1">{t('pay.loadingChitData')}</Typography>
               {isInitialLoad && (
                 <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                  Initializing payment system...
+                  {t('pay.initializingPaymentSystem')}
                 </Typography>
               )}
             </Paper>
           ) : error ? (
             <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body1" color="error">
-                Error loading chit data: {error}
+                {t('pay.errorLoadingChitData', { error: error })}
               </Typography>
               <Button 
                 variant="outlined" 
@@ -861,16 +867,16 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
                 sx={{ mt: 2 }}
                 onClick={handleRetry}
               >
-                Retry
+                {t('pay.retry')}
               </Button>
             </Paper>
           ) : chitList.length === 0 ? (
             <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body1" color="textSecondary">
-                No chit data available
+                {t('pay.noChitDataAvailable')}
               </Typography>
               <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                You may not be enrolled in any chit funds yet.
+                {t('pay.notEnrolledInChitFunds')}
               </Typography>
               <Button 
                 variant="outlined" 
@@ -878,7 +884,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
                 sx={{ mt: 2 }}
                 onClick={handleRetry}
               >
-                Refresh
+                {t('pay.refresh')}
               </Button>
             </Paper>
           ) : (
@@ -900,12 +906,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
           <Paper elevation={3} sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
               <Typography variant="h4" component="h1" gutterBottom align="center">
-                Week Selection
+                {t('pay.weekSelection')}
               </Typography>
 
               <Chip
                 icon={<CalendarTodayIcon />}
-                label={`Week ${currentWeek} of ${currentMonth}`}
+                label={t('pay.weekOf', { week: currentWeek, month: currentMonth })}
                 color="primary"
                 variant="outlined"
                 sx={{ mb: 2 }}
@@ -914,7 +920,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
             
             {selectedCells.length > 0 && (
               <Alert severity="info" sx={{ mb: 2 }}>
-                You have selected {weekSelected().length} week(s): {weekSelected().join(', ')}
+                {t('pay.selectedCells', { count: weekSelected().length, cells: weekSelected().join(', ') })}
               </Alert>
             )}
 
@@ -989,11 +995,11 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
           }}
         >
           <Typography id="base-amount-modal-title" variant="h5" component="h2" gutterBottom>
-            Set Base Amount
+            {t('pay.setBaseAmount')}
           </Typography>
 
           <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
-            The chit fund requires a base amount to be set. Please enter an amount greater than ₹200, or a multiple of ₹100.
+            {t('pay.baseAmountDescription')}
           </Typography>
 
           <Divider sx={{ mb: 3 }} />
@@ -1004,13 +1010,13 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               required
               fullWidth
               id="baseAmount"
-              label="Base Amount (₹)"
+              label={t('pay.baseAmountLabel')}
               name="baseAmount"
               type="number"
               value={baseAmountValue}
               onChange={handleBaseAmountChange}
               error={!!baseAmountError}
-              helperText={baseAmountError || "Minimum amount is ₹200"}
+              helperText={baseAmountError || t('pay.minimumAmountIs')}
               InputProps={{
                 startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                 inputProps: { min: 200, step: 50 }
@@ -1027,14 +1033,14 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
                 onClick={handleBaseAmountSubmit}
                 disabled={baseAmountValue < 200}
               >
-                Set Base Amount
+                {t('pay.setBaseAmount')}
               </Button>
               <Button
                 fullWidth
                 variant="outlined"
                 onClick={handleBaseAmountModalClose}
               >
-                Cancel
+                {t('pay.cancel')}
               </Button>
             </Stack>
           </Box>
@@ -1063,12 +1069,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
           }}
         >
           <Typography id="payment-modal-title" variant="h5" component="h2" gutterBottom>
-            Payment Details
+            {t('pay.paymentDetails')}
           </Typography>
 
           <Typography variant="body1" sx={{ mb: 3 }}>
             {/* You have selected {selectedCells.length} week(s): {selectedCells.join(', ')} */}
-            You have selected {selectedCells.length} week(s)
+            {t('pay.youHaveSelectedWeeks', { count: selectedCells.length })}
           </Typography>
 
           <Divider sx={{ mb: 3 }} />
@@ -1079,7 +1085,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               required
               fullWidth
               id="amount"
-              label="Amount (₹)"
+              label={t('pay.amountLabel')}
               name="amount"
               type="number"
               disabled
@@ -1089,7 +1095,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
                 startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                 inputProps: { min: 200 }
               }}
-              helperText="Minimum amount is ₹200"
+              helperText={t('pay.minimumAmountIs')}
               sx={{ mb: 3 }}
             />
 
@@ -1107,14 +1113,14 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
                 color="primary"
                 onClick={handleFinalPaymentSubmit}
               >
-                Pay
+                {t('pay.pay')}
               </Button>
               <Button
                 fullWidth
                 variant="outlined"
                 onClick={handlePaymentModalClose}
               >
-                Cancel
+                {t('pay.cancel')}
               </Button>
             </Stack>
           </Box>
