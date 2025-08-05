@@ -15,7 +15,8 @@ import {
   Stack,
   Alert,
   IconButton,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import PaymentIcon from '@mui/icons-material/Payment';
@@ -250,8 +251,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     };
   };
   
-  // Handle base amount blur event to create a new chit when in no validation mode
-  const handleBaseAmountBlur = async () => {
+  // Handle creating a new chit (shared logic for blur, enter key, and button click)
+  const handleCreateNewChit = async () => {
     if (showBaseAmountNoValidation && !isNaN(baseAmount) && baseAmount > 0 && !isCreatingChit) {
       // Validate that we have a current user ID
       if (!currentUserId) {
@@ -322,6 +323,19 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
       } finally {
         setIsCreatingChit(false);
       }
+    }
+  };
+
+  // Handle base amount blur event to create a new chit when in no validation mode
+  const handleBaseAmountBlur = async () => {
+    await handleCreateNewChit();
+  };
+
+  // Handle Enter key press to create a new chit (mobile-friendly alternative to Tab)
+  const handleBaseAmountKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && showBaseAmountNoValidation) {
+      event.preventDefault(); // Prevent form submission
+      await handleCreateNewChit();
     }
   };
   
@@ -481,25 +495,44 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         </FormControl>
       )}
         {/* Base Amount Field */}
-        <TextField
-          fullWidth
-          label={showBaseAmountNoValidation ? "Base Amount (No Validation)" : "Base Amount"}
-          type="number"
-          value={!isNaN(baseAmount) ? baseAmount : ''}
-          onChange={handleBaseAmountChange}
-          onBlur={handleBaseAmountBlur}
-          disabled={(!showBaseAmountNoValidation && !isCreatingChit) }
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <CurrencyRupeeIcon />
-              </InputAdornment>
-            ),
-          }}
-          helperText={showBaseAmountNoValidation ? "Enter any amount and press Tab to create a new chit" : "Minimum ₹200, in hundreds only (200, 300, 400, etc.)"}
-          required
-          color={showBaseAmountNoValidation ? "secondary" : "primary"}
-        />
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+          <TextField
+            fullWidth
+            label={showBaseAmountNoValidation ? "Base Amount (No Validation)" : "Base Amount"}
+            type="number"
+            value={!isNaN(baseAmount) ? baseAmount : ''}
+            onChange={handleBaseAmountChange}
+            onBlur={handleBaseAmountBlur}
+            onKeyDown={handleBaseAmountKeyDown}
+            disabled={(!showBaseAmountNoValidation && !isCreatingChit) }
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CurrencyRupeeIcon />
+                </InputAdornment>
+              ),
+            }}
+            helperText={showBaseAmountNoValidation ? "Enter amount and press Tab/Enter or click Create button" : "Minimum ₹200, in hundreds only (200, 300, 400, etc.)"}
+            required
+            color={showBaseAmountNoValidation ? "secondary" : "primary"}
+          />
+          {showBaseAmountNoValidation && (
+            <Tooltip title={isCreatingChit ? "Creating chit..." : "Create new chit with entered amount"}>
+              <IconButton
+                onClick={handleCreateNewChit}
+                disabled={isCreatingChit || isNaN(baseAmount) || baseAmount <= 0}
+                color="primary"
+                sx={{ mt: 1 }}
+              >
+                {isCreatingChit ? (
+                  <CircularProgress size={24} />
+                ) : (
+                  <AddCircleIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
         
         {/* Pay Amount Field */}
         

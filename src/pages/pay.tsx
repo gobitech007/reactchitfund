@@ -151,14 +151,19 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     }
   }, [chitUsersData, isLoading, error, isInitialLoad, userId, currentUser]);
   
-  // Handle fetching payment details when chitList or disabledCells change
+  // Handle fetching payment details when chitList changes
   useEffect(() => {
-    // If there's only one chit, fetch its payment details automatically
-    if (chitList.length === 1 && chitList[0].chit_id && disabledCells.length === 0) {
-      // Use cached data if available
-      fetchChitPaymentDetailsRef.current(chitList[0].chit_id, false);
+    // If chitList is loaded and we don't have a selected chit, select the first one
+    if (chitList.length > 0 && !chitSelectId) {
+      const firstChit = chitList[0];
+      if (firstChit.chit_id) {
+        console.log('Auto-selecting first chit:', firstChit.chit_id);
+        setChitSelectId(firstChit.chit_id);
+        // Fetch payment details for the first chit
+        fetchChitPaymentDetailsRef.current(firstChit.chit_id, false);
+      }
     }
-  }, [chitList, disabledCells]);
+  }, [chitList, chitSelectId]);
   
   // Define the chit list item type
   interface ChitListItem {
@@ -248,6 +253,15 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   useEffect(() => {
     console.log('Selected cells updated:', selectedCells);
   }, [selectedCells]);
+
+  // Debug useEffect to track chit selection changes
+  useEffect(() => {
+    console.log('Chit selection changed:', {
+      chitSelectId,
+      paidCellsCount: paidCells.length,
+      disabledCellsCount: disabledCells.length
+    });
+  }, [chitSelectId, paidCells.length, disabledCells.length]);
 
   // Debug useEffect to track data loading states
   useEffect(() => {
@@ -748,43 +762,66 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   // Handle payment panel value changes
   const handlePaymentValuesChange = useCallback((values: {
     chitId: string;
+    chitNo: string;
     baseAmount: number;
     payAmount: number;
     weekSelection: number;
   }) => { 
+    console.log('Payment values changed:', values);
+    
+    // Check if chit has changed
+    const chitChanged = chitSelectId !== values.chitId;
+    
+    if (chitChanged) {
+      // Reset calendar state when chit changes
+      setSelectedCells([]);
+      setPaidCells([]);
+      setDisabledCells([]);
+      setCalendarSelection(false);
+      
+      // Update the selected chit ID
+      setChitSelectId(values.chitId);
+      
+      // Fetch payment details for the new chit
+      if (values.chitId) {
+        console.log('Fetching payment details for new chit:', values.chitId);
+        fetchChitPaymentDetails(values.chitId, true); // Force refresh for new chit
+      }
+    }
+    
     if (calendarSelection) {
-
+      // If user has manually selected cells, don't override their selection
+      // Just update payment data
+      setPaymentData(prev => ({
+        ...prev,
+        amount: values.payAmount
+      }));
     } else {
-      setSelectedCells([]);  
-      if (values.baseAmount?.toString().length < 3 || (values && values.payAmount !== 0 && values.payAmount?.toString().length < 3)) {
-        return; 
-      } 
-      // Fetch payment details when chit ID changes
-      if (values.chitId && values.baseAmount.toString().length >= 2) {
-        fetchChitPaymentDetails(values.chitId);
+      // Auto-calculate selected cells based on weekSelection only if no manual selection
+      if (!chitChanged && values.baseAmount && values.payAmount && values.weekSelection > 0) {
+        const paidCellsLength = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
+        const newSelectedCells: number[] = [...paidCellsLength]; // Include previous paid cells
+        const maxSelectedCell = paidCellsLength.length > 0 ? Math.max(...paidCellsLength) : 0;
+        
+        // Add new cells based on weekSelection
+        for (let i = maxSelectedCell + 1; i <= (values.weekSelection + maxSelectedCell); i++) {
+          // Only add to selected cells if not already paid and not already in the array
+          const isPaid = paidCells.some(cell => cell.week === i && cell.is_paid === 'Y');
+          const isAlreadySelected = newSelectedCells.includes(i);
+          if (!isPaid && !isAlreadySelected) {
+            newSelectedCells.push(i);
+          }
+        }
+        setSelectedCells(newSelectedCells.sort((a, b) => a - b));
       }
       
-      // Update selected cells based on weekSelection
-      // This is just an example - you might want to implement your own logic
-      const paidCellsLength = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
-      const newSelectedCells: number[] = paidCellsLength; // Include previous array values
-      const maxSelectedCell = paidCellsLength.length > 0 ? Math.max(...paidCellsLength) : 0;
-      for (let i = 1; i <= (values.weekSelection + maxSelectedCell); i++) {
-        // Only add to selected cells if not already paid and not already in the array
-        const isPaid = paidCells.some(cell => cell.week === i && cell.is_paid === 'Y');
-        const isAlreadySelected = newSelectedCells.includes(i);
-        if (!isPaid && !isAlreadySelected) {
-          newSelectedCells.push(i);
-        }
-      }
-      setSelectedCells(newSelectedCells);
       // Update payment data
       setPaymentData(prev => ({
         ...prev,
         amount: values.payAmount
       }));
     }
-  }, [calendarSelection, paidCells, fetchChitPaymentDetails]);
+  }, [calendarSelection, paidCells, fetchChitPaymentDetails, chitSelectId]);
 
   const weekSelected = () => {
     const paidWeeks = paidCells.filter(cell => cell.is_paid === 'Y').map(cell => cell.week);
