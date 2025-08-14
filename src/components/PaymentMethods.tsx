@@ -19,21 +19,35 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import PaymentIcon from '@mui/icons-material/Payment';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import GoogleIcon from '@mui/icons-material/Google';
 import QRCodeComponent from './QRCodeComponent';
+import GooglePayButton from './GooglePayButton';
 import { PaymentFormData, PaymentMethod } from '../utils/interface-utils';
 import { getRandomTestCard, getRandomTestUpiId, generateFutureExpiryDate } from '../utils/test-card-data';
+import { useTranslation } from 'react-i18next';
 
 interface PaymentMethodsProps {
   paymentData: PaymentFormData;
   onPaymentDataChange: (data: PaymentFormData) => void;
   errors?: Record<string, string>;
+  chitId?: string;
+  weeks?: number[];
+  userId?: string;
+  onGooglePaySuccess?: (paymentData: any) => void;
+  onGooglePayError?: (error: any) => void;
 }
 
 const PaymentMethods: React.FC<PaymentMethodsProps> = ({
   paymentData,
   onPaymentDataChange,
-  errors = {}
+  errors = {},
+  chitId = '',
+  weeks = [],
+  userId = '',
+  onGooglePaySuccess,
+  onGooglePayError
 }) => {
+  const { t } = useTranslation();
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Validation functions
@@ -309,6 +323,16 @@ const PaymentMethods: React.FC<PaymentMethodsProps> = ({
               </Box>
             }
           />
+          <FormControlLabel
+            value="google_pay"
+            control={<Radio />}
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <GoogleIcon />
+                Google Pay
+              </Box>
+            }
+          />
         </RadioGroup>
       </FormControl>
 
@@ -451,6 +475,35 @@ const PaymentMethods: React.FC<PaymentMethodsProps> = ({
           <Alert severity="info" sx={{ mt: 2 }}>
             You can use any UPI app like Google Pay, PhonePe, Paytm, BHIM, or your bank's UPI app to scan and pay.
           </Alert>
+        </Box>
+      )}
+
+      {/* Google Pay Section */}
+      {paymentData.paymentMethod === 'google_pay' && (
+        <Box>
+          <Typography variant="h6" gutterBottom>
+            {t('pay.googlePayPayment')}
+          </Typography>
+          
+          <Alert severity="info" sx={{ mb: 3 }}>
+            {t('pay.googlePayDescription')}
+          </Alert>
+
+          {chitId && weeks.length > 0 && userId && onGooglePaySuccess && onGooglePayError ? (
+            <GooglePayButton
+              amount={paymentData.amount * 100} // Convert to paise
+              currency="INR"
+              chitId={chitId}
+              weeks={weeks}
+              userId={userId}
+              onPaymentSuccess={onGooglePaySuccess}
+              onPaymentError={onGooglePayError}
+            />
+          ) : (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              {t('pay.googlePayNotConfigured')}
+            </Alert>
+          )}
         </Box>
       )}
     </Box>

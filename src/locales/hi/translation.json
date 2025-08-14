@@ -130,7 +130,15 @@
     "youHaveSelectedWeeks": "आपने {count} सप्ताह चुने हैं",
     "amountLabel": "राशि (₹)",
     "pay": "भुगतान करें",
-    "weeklyChit": "साप्ताहिक चिट"
+    "weeklyChit": "साप्ताहिक चिट",
+    "loadingGooglePay": "Google Pay लोड हो रहा है...",
+    "payWithGooglePay": "Google Pay से भुगतान करें",
+    "processing": "प्रसंस्करण...",
+    "paymentCancelled": "भुगतान रद्द कर दिया गया",
+    "paymentConfigurationError": "भुगतान कॉन्फ़िगरेशन त्रुटि",
+    "googlePayPayment": "Google Pay भुगतान",
+    "googlePayDescription": "अपने सहेजे गए कार्ड या बैंक खाते का उपयोग करके Google Pay के साथ सुरक्षित रूप से भुगतान करें।",
+    "googlePayNotConfigured": "Google Pay सही तरीके से कॉन्फ़िगर नहीं है। कृपया सहायता से संपर्क करें।"
   },
   "validation": {
     "required": "यह फ़ील्ड आवश्यक है",

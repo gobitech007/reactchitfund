@@ -332,6 +332,123 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     setPaymentModalOpen(false);
   };
 
+  // Handle Google Pay success
+  const handleGooglePaySuccess = async (googlePayData: any) => {
+    try {
+      console.log('Google Pay success:', googlePayData);
+      
+      // Update payment data with Google Pay token
+      setPaymentData(prev => ({
+        ...prev,
+        paymentMethod: 'google_pay',
+        googlePayToken: googlePayData.googlePayToken,
+        paymentMethodData: googlePayData.paymentMethodData,
+        orderId: googlePayData.orderId
+      }));
+
+      // Process the payment directly without opening modal
+      await processGooglePayPayment(googlePayData);
+      
+    } catch (error) {
+      console.error('Error handling Google Pay success:', error);
+      setNotification({
+        open: true,
+        message: t('pay.paymentFailed', { error: error instanceof Error ? error.message : 'Unknown error' }),
+        severity: 'error'
+      });
+    }
+  };
+
+  // Handle Google Pay error
+  const handleGooglePayError = (error: any) => {
+    console.error('Google Pay error:', error);
+    
+    let errorMessage = t('pay.paymentFailed', { error: 'Unknown error' });
+    
+    if (error.statusCode === 'CANCELED') {
+      errorMessage = t('pay.paymentCancelled');
+    } else if (error.statusCode === 'DEVELOPER_ERROR') {
+      errorMessage = t('pay.paymentConfigurationError');
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    setNotification({
+      open: true,
+      message: errorMessage,
+      severity: 'error'
+    });
+  };
+
+  // Process Google Pay payment
+  const processGooglePayPayment = async (googlePayData: any) => {
+    try {
+      // Prepare payment request for backend
+      const paymentRequest = {
+        googlePayToken: googlePayData.googlePayToken,
+        amount: googlePayData.amount,
+        currency: googlePayData.currency,
+        chitId: googlePayData.chitId,
+        weeks: googlePayData.weeks,
+        userId: googlePayData.userId,
+        orderId: googlePayData.orderId,
+        paymentMethodData: googlePayData.paymentMethodData
+      };
+
+      // Call your backend API to process the payment
+      const response = await fetch('/api/payments/google-pay', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Add your auth token
+        },
+        body: JSON.stringify(paymentRequest)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Payment successful
+        setNotification({
+          open: true,
+          message: t('pay.paymentSuccessful', { 
+            amount: googlePayData.amount / 100, // Convert back to rupees
+            weeks: googlePayData.weeks.join(', '), 
+            transactionId: result.transactionId 
+          }),
+          severity: 'success'
+        });
+
+        // Close payment modal if open
+        setPaymentModalOpen(false);
+
+        // Refresh payment details
+        if (googlePayData.chitId) {
+          fetchChitPaymentDetailsRef.current(googlePayData.chitId, true);
+        }
+
+        // Clear selected cells after successful payment
+        setSelectedCells([]);
+        setCalendarSelection(false);
+
+      } else {
+        // Payment failed
+        setNotification({
+          open: true,
+          message: t('pay.paymentFailed', { error: result.error || 'Payment processing failed' }),
+          severity: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Google Pay payment processing error:', error);
+      setNotification({
+        open: true,
+        message: t('pay.paymentFailed', { error: error instanceof Error ? error.message : 'Network error' }),
+        severity: 'error'
+      });
+    }
+  };
+
   // Handle base amount modal close
   const handleBaseAmountModalClose = () => {
     setBaseAmountModalOpen(false);
@@ -1104,6 +1221,11 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               paymentData={paymentData}
               onPaymentDataChange={handlePaymentDataChange}
               errors={paymentErrors}
+              chitId={chitSelectId}
+              weeks={selectedCells}
+              userId={userId || ''}
+              onGooglePaySuccess={handleGooglePaySuccess}
+              onGooglePayError={handleGooglePayError}
             />
 
             <Stack direction="row" spacing={2} sx={{ mt: 4 }}>

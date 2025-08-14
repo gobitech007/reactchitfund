@@ -127,7 +127,15 @@
     "youHaveSelectedWeeks": "நீங்கள் {count} வாரங்களை தேர்ந்தெடுத்துள்ளீர்கள்",
     "amountLabel": "தொகை (₹)",
     "pay": "செலுத்து",
-    "weeklyChit": "வாராந்திர சிட்"
+    "weeklyChit": "வாராந்திர சிட்",
+    "loadingGooglePay": "Google Pay ஏற்றப்படுகிறது...",
+    "payWithGooglePay": "Google Pay மூலம் செலுத்தவும்",
+    "processing": "செயலாக்கப்படுகிறது...",
+    "paymentCancelled": "கட்டணம் ரத்து செய்யப்பட்டது",
+    "paymentConfigurationError": "கட்டண கட்டமைப்பு பிழை",
+    "googlePayPayment": "Google Pay கட்டணம்",
+    "googlePayDescription": "உங்கள் சேமிக்கப்பட்ட கார்டுகள் அல்லது வங்கி கணக்கைப் பயன்படுத்தி Google Pay மூலம் பாதுகாப்பாக செலுத்தவும்.",
+    "googlePayNotConfigured": "Google Pay சரியாக கட்டமைக்கப்படவில்லை. தயவுசெய்து ஆதரவைத் தொடர்பு கொள்ளவும்."
   },
   "validation": {
     "required": "இந்த புலம் தேவை",

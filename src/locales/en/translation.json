@@ -138,7 +138,15 @@
     "youHaveSelectedWeeks": "You have selected {count} week(s)",
     "amountLabel": "Amount (₹)",
     "pay": "Pay",
-    "weeklyChit": "Weekly Chit"
+    "weeklyChit": "Weekly Chit",
+    "loadingGooglePay": "Loading Google Pay...",
+    "payWithGooglePay": "Pay with Google Pay",
+    "processing": "Processing...",
+    "paymentCancelled": "Payment was cancelled",
+    "paymentConfigurationError": "Payment configuration error",
+    "googlePayPayment": "Google Pay Payment",
+    "googlePayDescription": "Pay securely with Google Pay using your saved cards or bank account.",
+    "googlePayNotConfigured": "Google Pay is not properly configured. Please contact support."
   },
   "validation": {
     "required": "This field is required",

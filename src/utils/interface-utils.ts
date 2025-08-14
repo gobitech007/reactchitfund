@@ -30,7 +30,7 @@ export interface PaymentData {
 }
 
 // Payment method type
-export type PaymentMethod = 'credit_card' | 'debit_card' | 'upi' | 'net_banking' | 'wallet';
+export type PaymentMethod = 'credit_card' | 'debit_card' | 'upi' | 'net_banking' | 'wallet' | 'google_pay';
 export interface PaymentFormData {
   amount: number;
   paymentMethod: PaymentMethod;
@@ -39,6 +39,9 @@ export interface PaymentFormData {
   expiryDate?: string;
   cvv?: string;
   upiId?: string;
+  googlePayToken?: string;
+  paymentMethodData?: any;
+  orderId?: string;
 }
 
 export interface CellData {

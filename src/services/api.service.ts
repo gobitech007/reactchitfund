@@ -15,14 +15,23 @@ if (isDebugEnabled()) {
   });
 
   // Add a startup check for API connectivity
-  fetch(getApiUrl())
+  fetch(`${getApiUrl()}/health`)
     .then(response => {
-      console.log('✅ API server is reachable at:', getApiUrl());
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    })
+    .then(data => {
+      console.log('✅ API server is healthy at:', getApiUrl());
+      console.log('✅ Server status:', data.message, '- Version:', data.version);
     })
     .catch(error => {
-      console.warn('⚠️ API server is not reachable at:', getApiUrl());
+      console.warn('⚠️ API server health check failed at:', getApiUrl());
       console.warn('Error details:', error.message);
       console.warn('Please make sure the backend server is running with: python run.py --mode dev');
+      console.warn('Backend should be accessible at: http://localhost:8000/api');
     });
 }
 
