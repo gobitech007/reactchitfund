@@ -1,18 +1,19 @@
-#stage 1
 FROM node:18-alpine
 
-#stage 2
 WORKDIR /app
 
-#stage 3
+# Better cache + reproducible installs
 COPY package*.json ./
 RUN npm install --prefer-offline --no-audit --progress=false --loglevel=error
+
 # App source
 COPY . .
+
 # Bind CRA dev server to all interfaces and use port 3000
 ENV HOST=0.0.0.0
 ENV PORT=3000
 EXPOSE 3000
+
 # Helps file watching on Windows/WSL
 ENV CHOKIDAR_USEPOLLING=true
 
