@@ -5,14 +5,7 @@ WORKDIR /app
 # Better cache + reproducible installs
 COPY package*.json ./
 
-RUN npm config set registry https://registry.npmjs.org/
-
-RUN npm install pm2 -g
-
-# Install app dependencies, but save them in a separate layer so that we can take advantage of Docker's caching mechanism.
-RUN apk add --update git && rm -rf /var/cache/apk/*
-
-RUN npm install --save-exact --prefer-offline --no-audit --progress=false --loglevel=error
+RUN npm install  --prefer-offline --no-audit --progress=false --loglevel=error
 
 # App source
 COPY . .
