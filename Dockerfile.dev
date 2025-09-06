@@ -5,7 +5,7 @@ WORKDIR /app
 # Better cache + reproducible installs
 COPY package*.json ./
 
-RUN npm install --save-exact --prefer-offline --no-audit --progress=false --loglevel=error
+RUN npm install  --prefer-offline --no-audit --progress=false --loglevel=error
 
 # App source
 COPY . .
