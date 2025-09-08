@@ -12,28 +12,17 @@ import {
   Chip,
   Modal,
   TextField,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormControl,
-  FormLabel,
-  InputAdornment,
-  Grid
+  InputAdornment
 } from '@mui/material';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-// import { DataProvider } from '../context';
-import PaymentIcon from '@mui/icons-material/Payment';
 import CellGrid from '../components/CellGrid';
 import PaymentPanel from '../components/PaymentPanel';
 import PaymentMethods from '../components/PaymentMethods';
 import { withNavigation } from '../utils/withNavigation';
 import { getCurrentWeekWithOrdinal, getCurrentMonthName } from '../utils/date-utils';
-import QRCodeComponent from '../components/QRCodeComponent';
 import { useAuth, useData, useDynamicApiStore } from '../context';
 import {PaymentService, ApiService} from '../services';
-import { CellData, ChitItem, PaymentData, PaymentFormData, PaymentMethod } from '../utils/interface-utils';
+import { CellData, ChitItem, PaymentData, PaymentFormData } from '../utils/interface-utils';
 import { useTranslation } from 'react-i18next';
 
 interface CellSelectionProps {
@@ -151,7 +140,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       console.warn('No chit data received. User ID:', userId, 'Current User:', currentUser);
       setIsInitialLoad(false);
     }
-  }, [chitUsersData, isLoading, error, isInitialLoad, userId, currentUser]);
+  }, [chitUsersData, isLoading, error, isInitialLoad, userId, currentUser, baseAmountValue, t]);
   
   // Handle fetching payment details when chitList changes
   useEffect(() => {
@@ -516,12 +505,12 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   };
 
   // Handle payment method change
-  const handlePaymentMethodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPaymentData(prev => ({
-      ...prev,
-      paymentMethod: e.target.value as PaymentMethod
-    }));
-  };
+  // const handlePaymentMethodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setPaymentData(prev => ({
+  //     ...prev,
+  //     paymentMethod: e.target.value as PaymentMethod
+  //   }));
+  // };
 
   // Handle payment data changes from PaymentMethods component
   const handlePaymentDataChange = (newPaymentData: PaymentFormData) => {
@@ -679,7 +668,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
       }
       
       // All payments succeeded
-      const response = responses.flatMap(response => response?.data).flat(); // Flatten nested arrays; // Use the first response for notification
+      // const response = responses.flatMap(response => response?.data).flat(); // Flatten nested arrays; // Use the first response for notification
 
       if (responses[0].error) {
         // Show error notification
