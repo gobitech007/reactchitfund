@@ -22,7 +22,8 @@
       "./node_modules/@types",
       "./src/types"
     ],
-    "noEmit": true
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src"

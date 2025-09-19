@@ -67,6 +67,7 @@ export const ROUTE_PERMISSIONS = {
   DASHBOARD: [ROLES.ADMIN, ROLES.MANAGER], // Only admin and manager can access dashboard
   PAY: [ROLES.CUSTOMER, ROLES.ADMIN], // Only customers can access payment page
   TRANSACTION_HISTORY: [ROLES.ADMIN, ROLES.MANAGER], // Only admin and manager can view transaction history
+  INTERVIEW: [ROLES.ADMIN, ROLES.MANAGER], // Only admin and manager can view transaction history
   USER_MANAGEMENT: [ROLES.ADMIN],
   REPORTS: [ROLES.ADMIN, ROLES.MANAGER]
 };

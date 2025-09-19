@@ -375,10 +375,18 @@ export class ChitService {
     try {
       const queryString = new URLSearchParams(params).toString();
       const response = await ApiService.get(`/chits/?${queryString}`);
-      return {
-        success: true,
-        data: response.data
-      };
+      if (response.data) {
+        return {
+          success: true,
+          data: response.data
+        };
+      } else {
+        return {
+          response: response.error,
+          success: false,
+          error: response.error || 'Failed to fetch chits'
+        }
+      }
     } catch (error) {
       if (process.env.NODE_ENV === 'test' || process.env.REAL_DB_TEST !== 'true') {
         return {

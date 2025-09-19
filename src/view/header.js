@@ -44,7 +44,7 @@ function Header() {
             <Link className="nav-link text-info" to={route.route}>{route.name}</Link>
           </li>
         );
-      } else if ((route.key === 'login' || route.key === 'register') && !isAuthenticated()) {
+      } else if ((route.key === 'login' || route.key === 'register' || route.key === 'interview') && !isAuthenticated()) {
         return (
           <li className="nav-item" key={route.key}>
             <Link className="nav-link text-info" to={route.route}>{route.name}</Link>

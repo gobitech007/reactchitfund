@@ -15,11 +15,12 @@ import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/applicationData.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleBasedRoute from './components/RoleBasedRoute';
-import DebugButton from './components/DebugButton';
-import RoleDebugInfo from './components/RoleDebugInfo';
-import RoleTestComponent from './components/RoleTestComponent';
+// import DebugButton from './components/DebugButton';
+// import RoleDebugInfo from './components/RoleDebugInfo';
+// import RoleTestComponent from './components/RoleTestComponent';
 import { performCorsCheck } from './utils/cors-check';
 import { initializeDebugHelpers } from './utils/debug-helpers';
+import Interview from './pages/interview';
 
 function App() {
   // Get routes from the hook
@@ -52,6 +53,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/interview" element={<Interview />} />
 
               {/* Map other public routes */}
               {publicRoutes.map((route) => (

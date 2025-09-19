@@ -8,6 +8,7 @@ import Register from './pages/register';
 import Login from './pages/login';
 import ForgotPassword from './pages/forgot-password';
 import { ROUTE_PERMISSIONS } from './utils/role-utils';
+import Interview from "./pages/interview";
 
 const useRoutes = () => {
   const { t } = useTranslation();
@@ -42,6 +43,16 @@ const useRoutes = () => {
       element: <TransactionHistory />,
       canView: true,
       allowedRoles: ROUTE_PERMISSIONS.TRANSACTION_HISTORY, // All roles can view transaction history
+    },
+    {
+      type: "collapse",
+      name: t('Interview'),
+      key: "interview",
+      icon: <Icon fontSize="small">Interview</Icon>,
+      route: "/interview",
+      element: <Interview />,
+      canView: true,
+      allowedRoles: ROUTE_PERMISSIONS.INTERVIEW, // All roles can view transaction history
     },
     {
       type: "collapse",

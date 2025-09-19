@@ -100,7 +100,7 @@ export const apiRequest = async <T = any>(
     if (!isAuthEndpoint) {
       const token = sessionStorage.getItem('authToken');
       if (token && tokenService.willTokenExpireSoon(token)) {
-        console.log('Token will expire soon, attempting to refresh...');
+        // console.log('Token will expire soon, attempting to refresh...');
         await tokenService.refreshToken();
       }
     }
@@ -130,9 +130,9 @@ export const apiRequest = async <T = any>(
       if (endpoint.startsWith('/auth/') && isDebugEnabled()) {
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
-          console.log('Token payload for', endpoint, ':', payload);
+          // console.log('Token payload for', endpoint, ':', payload);
         } catch (e) {
-          console.warn('Could not parse token payload for debugging:', e);
+          // console.warn('Could not parse token payload for debugging:', e);
         }
       }
     }
@@ -148,9 +148,9 @@ export const apiRequest = async <T = any>(
     // Add request body if provided (and not GET request)
     if (options.body && options.method !== HttpMethod.GET) {
       // Log the request body for debugging
-      console.log('Request body before serialization:', options.body);
+      // console.log('Request body before serialization:', options.body);
       requestOptions.body = JSON.stringify(options.body);
-      console.log('Request body after serialization:', requestOptions.body);
+      // console.log('Request body after serialization:', requestOptions.body);
     }
 
     // Make the request
@@ -160,20 +160,20 @@ export const apiRequest = async <T = any>(
 
     // Handle API errors
     if (!response.ok) {
-      console.error('API Error Response:', response.status, response.statusText, data);
+      // console.error('API Error Response:', response.status, response.statusText, data);
       let errorMessage = data?.detail || data?.message || `API Error: ${response.status} ${response.statusText}`;
       
       // Handle authentication errors (401 Unauthorized)
       if (response.status === 401) {
-        console.error('Authentication failed for endpoint:', endpoint);
-        console.error('Token used:', token ? 'Present' : 'Missing');
+        // console.error('Authentication failed for endpoint:', endpoint);
+        // console.error('Token used:', token ? 'Present' : 'Missing');
         if (token && isDebugEnabled()) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            console.error('Token payload:', payload);
-            console.error('Token expiry:', new Date(payload.exp * 1000));
+            // console.error('Token payload:', payload);
+            // console.error('Token expiry:', new Date(payload.exp * 1000));
           } catch (e) {
-            console.error('Could not parse token for debugging:', e);
+            // console.error('Could not parse token for debugging:', e);
           }
         }
         errorMessage = data?.detail || 'Authentication failed - invalid or expired token';
@@ -196,7 +196,7 @@ export const apiRequest = async <T = any>(
             ).join(', ');
           }
         } catch (e) {
-          console.error('Error parsing validation errors:', e);
+          // console.error('Error parsing validation errors:', e);
         }
       }
 
@@ -234,7 +234,7 @@ export const apiRequest = async <T = any>(
     };
   } catch (error) {
     // Handle network or other errors
-    console.error('API Request Error:', error);
+    // console.error('API Request Error:', error);
 
     // Provide more detailed error information for debugging
     let errorMessage = 'Unknown error occurred';
@@ -245,7 +245,7 @@ export const apiRequest = async <T = any>(
       // Add specific handling for network errors
       if (error.message === 'Failed to fetch') {
         errorMessage = 'Network error: Could not connect to the API server. Please ensure the backend server is running at ' + API_URL;
-        console.warn('API Connection Error: Make sure the backend server is running at', API_URL);
+        // console.warn('API Connection Error: Make sure the backend server is running at', API_URL);
       }
     }
 
