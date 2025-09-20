@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -24,7 +24,6 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 // Using regular TextField for date inputs to avoid compatibility issues
-import { UserService } from '../services/user.service';
 
 // Filter interfaces
 export interface UserOption {

@@ -8,7 +8,7 @@
  */
 export const getCurrentWeekNumber = (): number => {
   const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
+  const start = new Date(now.getFullYear()-1, 9, 1);
   const diff = now.getTime() - start.getTime();
   const oneDay = 1000 * 60 * 60 * 24;
   const day = Math.floor(diff / oneDay);

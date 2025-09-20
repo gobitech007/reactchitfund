@@ -482,9 +482,11 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
     setIsInitialLoad(false);
     
     // Close modal and reset state
-    setBaseAmountModalOpen(false);
+    setTimeout(() => {
+      setBaseAmountModalOpen(false);
+    }, 300); // Delay to allow any closing animations
     setBaseAmountError('');
-    setPendingChitData(null);
+    setPendingChitData(formattedChitList);
     
     // Show success notification
     setNotification({
@@ -742,7 +744,6 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
   // Get current week and month
   const currentWeek = getCurrentWeekWithOrdinal();
   const currentMonth = getCurrentMonthName();
-
   // Handle payment panel submission
   const handlePayModal = (data: PaymentData) => { 
     setChitSelectId(data?.chitId)   ;
@@ -1017,7 +1018,25 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
 
               <Chip
                 icon={<CalendarTodayIcon />}
-                label={t('pay.weekOf', { week: currentWeek, month: currentMonth })}
+                label={(() => {
+                  // Try different approaches to debug the issue
+                  const week = currentWeek || '1st';
+                  const month = currentMonth || 'October';
+                  
+                  // Test 1: Simple hardcoded values
+                  const test1 = t('pay.weekOf', { week: '2nd', month: 'December' });
+                  // console.log('Test 1 (hardcoded):', test1);
+                  
+                  // Test 2: With variables
+                  const test2 = t('pay.weekOf', { week: week, month: month });
+                  // console.log('Test 2 (variables):', test2);
+                  
+                  // Test 3: Alternative syntax
+                  const test3 = t('pay.weekOf', { week, month });
+                  // console.log('Test 3 (shorthand):', test3);
+                  
+                  return test3 || `Week ${week} of ${month}`;
+                })()}
                 color="primary"
                 variant="outlined"
                 sx={{ mb: 2 }}
@@ -1125,7 +1144,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
               helperText={baseAmountError || t('pay.minimumAmountIs')}
               InputProps={{
                 startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                inputProps: { min: 200, step: 50 }
+                inputProps: { min: 200, step: 100 }
               }}
               sx={{ mb: 3 }}
               autoFocus

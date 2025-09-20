@@ -53,7 +53,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/interview" element={<Interview />} />
+              {/* <Route path="/interview" element={<Interview />} /> */}
 
               {/* Map other public routes */}
               {publicRoutes.map((route) => (

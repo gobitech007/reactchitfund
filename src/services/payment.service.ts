@@ -3,7 +3,7 @@
  * Handles payment processing and transaction management
  */
 
-import { Transaction, SavedPaymentMethod, PaymentStatus, PaymentMethod, CardDetails, ChitItem, ChitListItem, CellData } from '../utils/interface-utils';
+import { Transaction, SavedPaymentMethod, PaymentStatus, PaymentMethod, CardDetails, ChitListItem, CellData } from '../utils/interface-utils';
 import ApiService, { ApiResponse } from './api.service';
 
 /**

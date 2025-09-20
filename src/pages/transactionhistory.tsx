@@ -13,14 +13,12 @@ import {
   Chip,
   TextField,
   InputAdornment,
-  IconButton,
   CircularProgress,
   Container,
   Alert,
   Snackbar
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import { useTranslation } from 'react-i18next';
 
 import { formatDate } from '../utils/date-utils';
@@ -34,24 +32,6 @@ import TransactionQuickActions from '../components/TransactionQuickActions';
 import { useAuth } from '../context/AuthContext';
 import { hasPermission, ROLES } from '../utils/role-utils';
 
-// Define transaction interface based on API response
-interface Payment {
-  pay_id: number;
-  transaction_id: string;
-  pay_type: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Transaction {
-  chit_id: number;
-  user_id: number;
-  chit_no: number;
-  amount: number;
-  week: number;
-  is_paid: string;
-  payment: Payment | null;
-}
 
 // Map API transaction to UI transaction model
 const mapTransactionForUI = (transaction: any) => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { hasPermission, getDefaultRole } from '../utils/role-utils';
+import { hasPermission, getDefaultRole, ROLES } from '../utils/role-utils';
 
 interface RoleBasedRouteProps {
   children: React.ReactNode;
@@ -35,23 +35,23 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({
   const userRole = currentUser.role || getDefaultRole();
 
   // Debug logging
-  console.log('RoleBasedRoute Debug:', {
-    userRole,
-    allowedRoles,
-    currentUser: currentUser,
-    redirectTo
-  });
+  // console.log('RoleBasedRoute Debug:', {
+  //   userRole,
+  //   allowedRoles,
+  //   currentUser: currentUser,
+  //   redirectTo
+  // });
 
   // Check if user's role is in the allowed roles
   const userHasPermission = hasPermission(userRole, allowedRoles);
 
-  console.log(`Permission check: User role '${userRole}' has permission: ${userHasPermission}`);
+  // console.log(`Permission check: User role '${userRole}' has permission: ${userHasPermission}`);
 
   // If user doesn't have permission, redirect to specified page
   if (!userHasPermission) {
     // If user is a customer, redirect to pay page, otherwise redirect to dashboard
-    const redirectPath = userRole === 'customer' ? '/pay' : '/dashboard';
-    console.log(`Access denied: User role '${userRole}' not in allowed roles [${allowedRoles.join(', ')}]. Redirecting to ${redirectPath}`);
+    const redirectPath = userRole === ROLES.CUSTOMER ? '/pay' : '/dashboard';
+    // console.log(`Access denied: User role '${userRole}' not in allowed roles [${allowedRoles.join(', ')}]. Redirecting to ${redirectPath}`);
     return <Navigate to={redirectPath} replace />;
   }
 
