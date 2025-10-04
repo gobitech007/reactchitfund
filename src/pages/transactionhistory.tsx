@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 
 import { formatDate } from '../utils/date-utils';
 import {PaymentService} from '../services';
@@ -31,6 +32,7 @@ import TransactionStatusSummary from '../components/TransactionStatusSummary';
 import TransactionQuickActions from '../components/TransactionQuickActions';
 import { useAuth } from '../context/AuthContext';
 import { hasPermission, ROLES } from '../utils/role-utils';
+import {queryClient} from '../services/queryClient';
 
 
 // Map API transaction to UI transaction model
@@ -102,40 +104,53 @@ const TransactionHistory = () => {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [chits, setChits] = useState<ChitOption[]>([]);
   const [filtersLoading, setFiltersLoading] = useState<boolean>(false);
+  const usersCache = useRef<UserOption[]>([]); // Cache for users to avoid refetching
   
   // Check if current user can view all users' transactions
   const canViewAllTransactions = currentUser && hasPermission(currentUser.role || 'customer', [ROLES.ADMIN, ROLES.MANAGER]);
 
+  // get chit hooks
+  const { data: chitData, isLoading: chitLoading, error: chitError } = useQuery({
+    queryKey: ['chits'],
+    queryFn: () => ChitService.getAllChits({ limit: 100 }),
+    enabled: canViewAllTransactions // Only fetch if user can view all transactions
+  });
+  if (chitData && chitData.success && chitData.data) {
+          const chitOptions: ChitOption[] = chitData.data.map((chit: any) => ({
+            chit_id: chit.chit_id,
+            chit_no: chit.chit_no || chit.chit_name,
+            amount: chit.monthly_amount || chit.total_amount || chit.amount || 0,
+            description: chit.description
+          }));
+          setChits(chitOptions);
+    }
+        console.log("Chit data from useQuery:", chitData, chitLoading, chitError);
   // Fetch users and chits data for filters (admin/manager only)
   useEffect(() => {
     const fetchFilterData = async () => {
       if (!canViewAllTransactions) return;
-      
+      // if (!usersCache.current.length) return;
       setFiltersLoading(true);
       try {
         // Fetch users
         const usersResponse = await UserService.getAllUsers(1, 100);
-        if (usersResponse.data && Array.isArray(usersResponse.data)) {
-          const userOptions: UserOption[] = usersResponse.data.map((user: any) => ({
-            user_id: user.user_id || user.id,
-            fullName: user.fullname || user.full_name || 'Unknown User',
-            email: user.email,
-            mobileNumber: user.mobileNumber || user.phone
-          }));
-          setUsers(userOptions);
+        if (usersResponse) {
+          usersCache.current = usersResponse; // Cache users in cache
+          setUsers(usersResponse);
         }
+        // console.log( await UserService.getUsersService())
 
         // Fetch chits
-        const chitsResponse = await ChitService.getAllChits({ limit: 100 });
-        if (chitsResponse.success && chitsResponse.data?.chits) {
-          const chitOptions: ChitOption[] = chitsResponse.data.chits.map((chit: any) => ({
-            chit_id: chit.chit_id,
-            chit_no: chit.chit_no || chit.chit_name,
-            amount: chit.monthly_amount || chit.total_amount || 0,
-            description: chit.description
-          }));
-          setChits(chitOptions);
-        }
+        // const chitsResponse = await ChitService.getAllChits({ limit: 100 });
+        // if (chitsResponse.success && chitsResponse.data) {
+        //   const chitOptions: ChitOption[] = chitsResponse.data.map((chit: any) => ({
+        //     chit_id: chit.chit_id,
+        //     chit_no: chit.chit_no || chit.chit_name,
+        //     amount: chit.monthly_amount || chit.total_amount || chit.amount || 0,
+        //     description: chit.description
+        //   }));
+        //   setChits(chitOptions);
+        // }
       } catch (error) {
         console.error('Error fetching filter data:', error);
         // Set mock data for development
@@ -155,7 +170,7 @@ const TransactionHistory = () => {
     };
 
     fetchFilterData();
-  }, [canViewAllTransactions]);
+  }, []);
 
   // Fetch transactions from API
   useEffect(() => {

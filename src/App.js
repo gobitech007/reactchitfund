@@ -59,7 +59,6 @@ function App() {
               {publicRoutes.map((route) => (
                 route.route && (
                   <Route
-                    exact
                     path={route.route}
                     element={route.element}
                     key={route.key}
@@ -72,7 +71,6 @@ function App() {
                 {authRoutes.map((route) => (
                   route.route && (
                     <Route
-                      exact
                       path={route.route}
                       element={
                         route.allowedRoles ? (

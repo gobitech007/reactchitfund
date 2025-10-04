@@ -20,7 +20,7 @@ export interface EnvConfig {
  */
 export const getEnvConfig = (): EnvConfig => {
   return {
-    API_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
+    API_URL: process.env.REACT_APP_API_URL || 'http://localhost:8001/api',
     ENV: (process.env.REACT_APP_ENV || 'development') as 'development' | 'staging' | 'production',
     DEBUG: process.env.REACT_APP_DEBUG === 'true',
     VERSION: process.env.REACT_APP_VERSION || '0.0.0',

@@ -256,7 +256,6 @@ const TransactionFiltersComponent: React.FC<TransactionFiltersProps> = ({
                 )}
               />
             </Grid>
-
             {/* Chit Selection */}
             <Grid item xs={12} md={6}>
               <Autocomplete
@@ -264,7 +263,7 @@ const TransactionFiltersComponent: React.FC<TransactionFiltersProps> = ({
                 getOptionLabel={(option) => `Chit ${option.chit_no} - ₹${option.amount.toLocaleString('en-IN')}`}
                 value={filters.selectedChit || null}
                 onChange={handleChitChange}
-                disabled={!filters.selectedUser}
+                // disabled={!filters.selectedUser}
                 loading={loadingUserChits}
                 renderInput={(params) => (
                   <TextField

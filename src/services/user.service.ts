@@ -2,7 +2,7 @@
  * User Service
  * Handles user profile management and related operations
  */
-
+import {cache} from 'react';
 import ApiService from './api.service';
 import { RegisterRequest, User } from './auth.service';
 
@@ -146,7 +146,7 @@ export const UserService = {
    * @param search - Search term for filtering users
    * @returns Promise with users list
    */
-  getAllUsers: async (page: number = 1, limit: number = 100, search?: string) => {
+  getAllUsers: cache(async(page: number = 1, limit: number = 100, search?: string) => {
     const params: Record<string, string> = {
       page: page.toString(),
       limit: limit.toString()
@@ -155,9 +155,18 @@ export const UserService = {
     if (search) {
       params.search = search;
     }
-    
-    return await ApiService.get('/users', params);
-  },
+    const allusersResponse = await ApiService.get('/users', params);
+    if (allusersResponse.data && Array.isArray(allusersResponse.data)) {
+       return allusersResponse.data.map((user: any) => ({
+          user_id: user.user_id || user.id,
+          fullName: user.fullname || user.full_name || 'Unknown User',
+          email: user.email,
+          mobileNumber: user.mobileNumber || user.phone
+        }));
+    } else {
+      throw new Error("Invalid response format");
+    }
+  }),
 
   /**
    * Get user's chits
