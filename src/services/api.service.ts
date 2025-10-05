@@ -31,7 +31,7 @@ if (isDebugEnabled()) {
       console.warn('⚠️ API server health check failed at:', getApiUrl());
       console.warn('Error details:', error.message);
       console.warn('Please make sure the backend server is running with: python run.py --mode dev');
-      console.warn('Backend should be accessible at: http://localhost:8000/api');
+      console.warn('Backend should be accessible at: http://api.smchitfund.local/api');
     });
 }
 
