@@ -5,9 +5,9 @@
       {
         "label": "Start React App on Port 3001",
         "type": "shell",
-        "command": "npm start",
+        // "command": "npm start",
         "problemMatcher": [],
-        "isBackground": true,
+        "isBackground": false,
         "presentation": {
           "reveal": "always",
           "panel": "dedicated",
@@ -18,7 +18,7 @@
         },
         "group": {
           "kind": "build",
-          "isDefault": true
+          "isDefault": false
         },
         "options": {
           "env": {

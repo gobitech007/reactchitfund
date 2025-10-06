@@ -146,7 +146,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
         const credentials: {
           email?: string;
           phone?: string;
-          aadharNumber?: string;
+          aadhar?: string;
           password?: string;
           pin?: string;
         } = {};
@@ -162,7 +162,7 @@ class Login extends React.Component<LoginPropsWithTranslation, LoginState> {
         } else if (loginMethod === 'mobile') {
           credentials.phone = phone;
         } else if (loginMethod === 'aadhar') {
-          credentials.aadharNumber = aadharNumber;
+          credentials.aadhar = aadharNumber;
         }
 
         console.log("Login form submitted:", credentials);

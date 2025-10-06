@@ -148,9 +148,9 @@ export const apiRequest = async <T = any>(
     // Add request body if provided (and not GET request)
     if (options.body && options.method !== HttpMethod.GET) {
       // Log the request body for debugging
-      // console.log('Request body before serialization:', options.body);
+      console.log('Request body before serialization:', options.body);
       requestOptions.body = JSON.stringify(options.body);
-      // console.log('Request body after serialization:', requestOptions.body);
+      console.log('Request body after serialization:', requestOptions.body);
     }
 
     // Make the request
