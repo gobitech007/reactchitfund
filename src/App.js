@@ -20,7 +20,6 @@ import RoleBasedRoute from './components/RoleBasedRoute';
 // import RoleTestComponent from './components/RoleTestComponent';
 import { performCorsCheck } from './utils/cors-check';
 import { initializeDebugHelpers } from './utils/debug-helpers';
-import Interview from './pages/interview';
 
 function App() {
   // Get routes from the hook
