@@ -3,7 +3,7 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Start React App on Port 3001",
+        "label": "Start React App on Port 3000",
         "type": "shell",
         // "command": "npm start",
         "problemMatcher": [],
@@ -22,7 +22,7 @@
         },
         "options": {
           "env": {
-            "PORT": "3001"
+            "PORT": "3000"
           }
         }
       }
