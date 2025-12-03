@@ -52,7 +52,7 @@ The application uses environment variables to configure different environments (
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| REACT_APP_API_URL | Backend API URL | http://api.smchitfund.local/api |
+| REACT_APP_API_URL | Backend API URL | http://20.84.48.36/chitfast/ |
 | REACT_APP_ENV | Current environment | development |
 | REACT_APP_DEBUG | Enable debug logging | true |
 
