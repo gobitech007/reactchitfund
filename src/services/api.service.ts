@@ -6,6 +6,7 @@
 import { getApiUrl, isDebugEnabled } from '../utils/env-utils';
 import tokenService from './token.service';
 import apiLogger from '../utils/api-logger';
+import { safeSessionStorage } from '../utils/safe-storage';
 
 // Log environment in development mode
 if (isDebugEnabled()) {
@@ -98,7 +99,7 @@ export const apiRequest = async <T = any>(
     
     // Check if token needs refresh before making the request
     if (!isAuthEndpoint) {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeSessionStorage.getItem('authToken');
       if (token && tokenService.willTokenExpireSoon(token)) {
         // console.log('Token will expire soon, attempting to refresh...');
         await tokenService.refreshToken();
@@ -122,7 +123,7 @@ export const apiRequest = async <T = any>(
     };
 
     // Add auth token if available (get fresh token after possible refresh)
-    const token = sessionStorage.getItem('authToken');
+    const token = safeSessionStorage.getItem('authToken');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
       
@@ -268,7 +269,7 @@ export const apiRequest = async <T = any>(
 };
 
 export const getToken = () => {
-  return sessionStorage.getItem('authToken');
+  return safeSessionStorage.getItem('authToken');
 };
 
 /**

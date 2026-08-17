@@ -229,5 +229,14 @@
       "description": "Export {{count}} transactions to your preferred format",
       "filters": "Applied Filters"
     }
+  },
+  "session": {
+    "timeout": {
+      "warning": "Session Timeout Warning",
+      "message": "Your session is about to expire due to inactivity.",
+      "timeRemaining": "Time remaining",
+      "continue": "Continue Session",
+      "logout": "Logout"
+    }
   }
 }

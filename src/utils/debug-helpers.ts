@@ -4,6 +4,9 @@
  */
 
 import apiLogger from './api-logger';
+import { safeSessionStorage } from './safe-storage';
+
+const isBrowser = (): boolean => typeof window !== 'undefined';
 
 /**
  * Global debug functions that can be called from browser console
@@ -191,8 +194,8 @@ const getChitPaymentErrors = () => {
  * Check current token status
  */
 const checkTokenStatus = () => {
-  const token = sessionStorage.getItem('authToken');
-  const user = sessionStorage.getItem('user');
+  const token = safeSessionStorage.getItem('authToken');
+  const user = safeSessionStorage.getItem('user');
   
   console.group('🔑 Token Status Check');
   
@@ -259,7 +262,7 @@ const checkTokenStatus = () => {
  * Debug authentication headers for the last request
  */
 const debugAuthHeaders = () => {
-  const token = sessionStorage.getItem('authToken');
+  const token = safeSessionStorage.getItem('authToken');
   
   console.group('🔍 Authentication Headers Debug');
   
@@ -292,9 +295,9 @@ const debugAuthHeaders = () => {
  * Initialize debug helpers
  */
 export const initializeDebugHelpers = () => {
-  // Only add debug helpers in development
-  if (process.env.NODE_ENV === 'development') {
-    window.debugApi = {
+  // Only add debug helpers in development and in browser
+  if (process.env.NODE_ENV === 'development' && isBrowser()) {
+    (window as any).debugApi = {
       getUserCreationErrors,
       downloadUserCreationLogs,
       clearLogs,

@@ -5,6 +5,7 @@
 import ApiService from './api.service';
 import tokenService from './token.service';
 import { logUserCreationAttempt } from '../utils/debug-helpers';
+import { safeSessionStorage } from '../utils/safe-storage';
 
 // User interfaces
 export interface User {
@@ -81,7 +82,7 @@ export const AuthService = {
 
     if (response.data && response.data.access_token) {
       // Store auth token and user data in sessionStorage
-      sessionStorage.setItem('authToken', response.data.access_token);
+      safeSessionStorage.setItem('authToken', response.data.access_token);
       
       // Extract user_id from login response
       let user_id = null;
@@ -99,7 +100,7 @@ export const AuthService = {
 
       // Store refresh token if available
       if (response.data.refreshToken) {
-        sessionStorage.setItem('refreshToken', response.data.refreshToken);
+        safeSessionStorage.setItem('refreshToken', response.data.refreshToken);
       }
       
       // Set up automatic token refresh
@@ -142,9 +143,9 @@ export const AuthService = {
     tokenService.clearTokenRefresh();
     
     // Remove tokens and user data from sessionStorage
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('refreshToken');
-    sessionStorage.removeItem('user');
+    safeSessionStorage.removeItem('authToken');
+    safeSessionStorage.removeItem('refreshToken');
+    safeSessionStorage.removeItem('user');
     
     // Optional: Call logout endpoint to invalidate token on server
     ApiService.post('/auth/logout').catch(error => {
@@ -157,7 +158,7 @@ export const AuthService = {
    * @returns Boolean indicating if user is authenticated
    */
   isAuthenticated: (): boolean => {
-    return !!sessionStorage.getItem('authToken');
+    return !!safeSessionStorage.getItem('authToken');
   },
 
   /**
@@ -165,7 +166,7 @@ export const AuthService = {
    * @returns Current user object or null
    */
   getCurrentUser: (): User | null => {
-    const userJson = sessionStorage.getItem('user');
+    const userJson = safeSessionStorage.getItem('user');
     return userJson ? JSON.parse(userJson) : null;
   },
 
@@ -197,7 +198,7 @@ export const AuthService = {
     
     if (success) {
       return { 
-        data: { token: sessionStorage.getItem('authToken') || '' }, 
+        data: { token: safeSessionStorage.getItem('authToken') || '' }, 
         error: null, 
         status: 200 
       };

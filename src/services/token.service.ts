@@ -5,6 +5,7 @@
 
 // import { AuthService } from './auth.service';
 import ApiService from './api.service';
+import { safeSessionStorage, safeWindow } from '../utils/safe-storage';
 
 // JWT token structure (partial)
 interface DecodedToken {
@@ -23,15 +24,16 @@ class TokenService {
    */
   public init(): void {
     // Check if we have a token
-    const token = sessionStorage.getItem('authToken');
+    const token = safeSessionStorage.getItem('authToken');
     if (token) {
       this.setupTokenRefresh(token);
     }
     
     // Listen for storage events (in case token is updated in another tab)
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'authToken' && event.newValue) {
-        this.setupTokenRefresh(event.newValue);
+    safeWindow.addEventListener('storage', (event) => {
+      const storageEvent = event as StorageEvent;
+      if (storageEvent.key === 'authToken' && storageEvent.newValue) {
+        this.setupTokenRefresh(storageEvent.newValue);
       }
     });
   }
@@ -110,7 +112,7 @@ class TokenService {
   public setupTokenRefresh(token: string): void {
     // Clear any existing refresh timeout
     if (this.refreshTimeoutId !== null) {
-      window.clearTimeout(this.refreshTimeoutId);
+      safeWindow.clearTimeout(this.refreshTimeoutId);
       this.refreshTimeoutId = null;
     }
     
@@ -132,7 +134,7 @@ class TokenService {
     console.log(`Token will be refreshed in ${Math.round(refreshTimeMs / 1000 / 60)} minutes`);
     
     // Set up timeout to refresh token
-    this.refreshTimeoutId = window.setTimeout(() => {
+    this.refreshTimeoutId = safeWindow.setTimeout(() => {
       this.refreshToken();
     }, refreshTimeMs);
   }
@@ -151,7 +153,7 @@ class TokenService {
     
     try {
       // Get current token
-      const currentToken = sessionStorage.getItem('authToken');
+      const currentToken = safeSessionStorage.getItem('authToken');
       if (!currentToken) {
         this.tokenRefreshInProgress = false;
         return false;
@@ -179,7 +181,7 @@ class TokenService {
         
         if (response.data && response.data.access_token) {
           // Store the new token
-          sessionStorage.setItem('authToken', response.data.access_token);
+          safeSessionStorage.setItem('authToken', response.data.access_token);
           
           // Set up refresh for the new token
           this.setupTokenRefresh(response.data.access_token);
@@ -207,7 +209,7 @@ class TokenService {
    */
   public clearTokenRefresh(): void {
     if (this.refreshTimeoutId !== null) {
-      window.clearTimeout(this.refreshTimeoutId);
+      safeWindow.clearTimeout(this.refreshTimeoutId);
       this.refreshTimeoutId = null;
     }
   }

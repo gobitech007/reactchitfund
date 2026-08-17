@@ -2,6 +2,7 @@ import { useEffect, createContext, useRef, useContext, useState, ReactNode } fro
 import isEqual from 'lodash/isEqual';
 import { AuthService, PaymentService, UserService } from '../services';
 import { useAuth } from '../context/AuthContext';
+import { safeSessionStorage } from '../utils/safe-storage';
 
 // Define the store type with index signature for dynamic properties
 export interface StoreData {
@@ -137,7 +138,7 @@ export const useDynamicApiStore = (key: ApiEndpointKey, options: DynamicApiOptio
           // If still not found, try to use a default or fallback
           if (!userId) {
             // Try to get from sessionStorage directly as a last resort
-            const storedUser = sessionStorage.getItem('user');
+            const storedUser = safeSessionStorage.getItem('user');
             if (storedUser) {
               try {
                 const parsedUser = JSON.parse(storedUser);

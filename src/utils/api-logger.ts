@@ -3,6 +3,10 @@
  * Simple logging system for API requests and responses, especially for debugging 400 errors
  */
 
+import { safeSessionStorage } from './safe-storage';
+
+const isBrowser = (): boolean => typeof window !== 'undefined';
+
 interface LogEntry {
   timestamp: string;
   method: string;
@@ -37,7 +41,7 @@ class ApiLogger {
       responseStatus,
       responseData,
       error,
-      userAgent: navigator.userAgent
+      userAgent: isBrowser() && typeof navigator !== 'undefined' ? navigator.userAgent : 'SSR'
     };
 
     this.logs.push(logEntry);
@@ -130,7 +134,7 @@ class ApiLogger {
    */
   private saveToStorage() {
     try {
-      sessionStorage.setItem('api_logs', JSON.stringify(this.logs));
+      safeSessionStorage.setItem('api_logs', JSON.stringify(this.logs));
     } catch (error) {
       console.warn('Failed to save logs to sessionStorage:', error);
     }
@@ -141,7 +145,7 @@ class ApiLogger {
    */
   loadFromStorage() {
     try {
-      const savedLogs = sessionStorage.getItem('api_logs');
+      const savedLogs = safeSessionStorage.getItem('api_logs');
       if (savedLogs) {
         this.logs = JSON.parse(savedLogs);
       }
@@ -156,7 +160,7 @@ class ApiLogger {
    */
   clearLogs() {
     this.logs = [];
-    sessionStorage.removeItem('api_logs');
+    safeSessionStorage.removeItem('api_logs');
   }
 
   /**
@@ -197,6 +201,8 @@ class ApiLogger {
    * Download logs as a file
    */
   downloadLogs(format: 'json' | 'csv' = 'json', filename?: string) {
+    if (!isBrowser()) return;
+    
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const defaultFilename = `api-logs-${timestamp}.${format}`;
     const finalFilename = filename || defaultFilename;
@@ -257,7 +263,9 @@ class ApiLogger {
 // Create singleton instance
 const apiLogger = new ApiLogger();
 
-// Load existing logs on initialization
-apiLogger.loadFromStorage();
+// Load existing logs on initialization (only in browser)
+if (isBrowser()) {
+  apiLogger.loadFromStorage();
+}
 
 export default apiLogger;

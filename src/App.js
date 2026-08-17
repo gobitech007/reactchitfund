@@ -12,6 +12,7 @@ import Login from './pages/login';
 import Register from './pages/register';
 import ForgotPassword from './pages/forgot-password';
 import { AuthProvider } from './context/AuthContext';
+import SessionTimeoutProvider from './context/SessionTimeoutProvider';
 import { DataProvider } from './context/applicationData.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleBasedRoute from './components/RoleBasedRoute';
@@ -43,63 +44,65 @@ function App() {
 
   return (
     <AuthProvider>
-      <DataProvider>
-        <div className="App">
-          <Header />
-          <main>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              {/* <Route path="/interview" element={<Interview />} /> */}
+      <SessionTimeoutProvider>
+        <DataProvider>
+          <div className="App">
+            <Header />
+            <main>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                {/* <Route path="/interview" element={<Interview />} /> */}
 
-              {/* Map other public routes */}
-              {publicRoutes.map((route) => (
-                route.route && (
-                  <Route
-                    path={route.route}
-                    element={route.element}
-                    key={route.key}
-                  />
-                )
-              ))}
-
-              {/* Protected routes with role-based access */}
-              <Route element={<ProtectedRoute />}>
-                {authRoutes.map((route) => (
+                {/* Map other public routes */}
+                {publicRoutes.map((route) => (
                   route.route && (
                     <Route
                       path={route.route}
-                      element={
-                        route.allowedRoles ? (
-                          <RoleBasedRoute allowedRoles={route.allowedRoles}>
-                            {route.element}
-                          </RoleBasedRoute>
-                        ) : (
-                          route.element
-                        )
-                      }
+                      element={route.element}
                       key={route.key}
                     />
                   )
                 ))}
-              </Route>
 
-              {/* Default route */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
+                {/* Protected routes with role-based access */}
+                <Route element={<ProtectedRoute />}>
+                  {authRoutes.map((route) => (
+                    route.route && (
+                      <Route
+                        path={route.route}
+                        element={
+                          route.allowedRoles ? (
+                            <RoleBasedRoute allowedRoles={route.allowedRoles}>
+                              {route.element}
+                            </RoleBasedRoute>
+                          ) : (
+                            route.element
+                          )
+                        }
+                        key={route.key}
+                      />
+                    )
+                  ))}
+                </Route>
 
-              {/* Catch all route - redirect to login */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
-          </main>
-          
-          {/* Debug components - only show in development mode */}
-          {/* <DebugButton /> */}
-          {/* <RoleDebugInfo /> */}
-          {/* <RoleTestComponent /> */}
-        </div>
-      </DataProvider>
+                {/* Default route */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+
+                {/* Catch all route - redirect to login */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </main>
+            
+            {/* Debug components - only show in development mode */}
+            {/* <DebugButton /> */}
+            {/* <RoleDebugInfo /> */}
+            {/* <RoleTestComponent /> */}
+          </div>
+        </DataProvider>
+      </SessionTimeoutProvider>
     </AuthProvider>
   );
 }

@@ -5,7 +5,7 @@
       {
         "label": "Start React App on Port 3000",
         "type": "shell",
-        // "command": "npm start",
+        "command": "npm start",
         "problemMatcher": [],
         "isBackground": false,
         "presentation": {

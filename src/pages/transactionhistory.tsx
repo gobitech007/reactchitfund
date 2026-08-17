@@ -115,16 +115,20 @@ const TransactionHistory = () => {
     queryFn: () => ChitService.getAllChits({ limit: 100 }),
     enabled: canViewAllTransactions // Only fetch if user can view all transactions
   });
-  if (chitData && chitData.success && chitData.data) {
-          const chitOptions: ChitOption[] = chitData.data.map((chit: any) => ({
-            chit_id: chit.chit_id,
-            chit_no: chit.chit_no || chit.chit_name,
-            amount: chit.monthly_amount || chit.total_amount || chit.amount || 0,
-            description: chit.description
-          }));
-          setChits(chitOptions);
+
+  // Update chits state when chitData changes
+  useEffect(() => {
+    if (chitData && chitData.success && chitData.data) {
+      const chitOptions: ChitOption[] = chitData.data.map((chit: any) => ({
+        chit_id: chit.chit_id,
+        chit_no: chit.chit_no || chit.chit_name,
+        amount: chit.monthly_amount || chit.total_amount || chit.amount || 0,
+        description: chit.description
+      }));
+      setChits(chitOptions);
     }
-        console.log("Chit data from useQuery:", chitData, chitLoading, chitError);
+    console.log("Chit data from useQuery:", chitData, chitLoading, chitError);
+  }, [chitData, chitLoading, chitError]);
   // Fetch users and chits data for filters (admin/manager only)
   useEffect(() => {
     const fetchFilterData = async () => {

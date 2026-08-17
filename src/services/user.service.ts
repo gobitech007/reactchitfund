@@ -5,6 +5,7 @@
 import {cache} from 'react';
 import ApiService from './api.service';
 import { RegisterRequest, User } from './auth.service';
+import { safeSessionStorage } from '../utils/safe-storage';
 
 // User profile update request
 export interface UserUpdateRequest {
@@ -51,10 +52,10 @@ export const UserService = {
     
     // Update local storage user data if successful
     if (response.data) {
-      const currentUser = sessionStorage.getItem('user');
+      const currentUser = safeSessionStorage.getItem('user');
       if (currentUser) {
         const updatedUser = { ...JSON.parse(currentUser), ...response.data };
-        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        safeSessionStorage.setItem('user', JSON.stringify(updatedUser));
       }
     }
     

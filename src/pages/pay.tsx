@@ -23,6 +23,7 @@ import { getCurrentWeekWithOrdinal, getCurrentMonthName } from '../utils/date-ut
 import { useAuth, useData, useDynamicApiStore } from '../context';
 import {PaymentService, ApiService} from '../services';
 import { CellData, ChitItem, PaymentData, PaymentFormData } from '../utils/interface-utils';
+import { safeLocalStorage } from '../utils/safe-storage';
 import { useTranslation } from 'react-i18next';
 
 interface CellSelectionProps {
@@ -389,7 +390,7 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Add your auth token
+          'Authorization': `Bearer ${safeLocalStorage.getItem('authToken') || ''}`
         },
         body: JSON.stringify(paymentRequest)
       });
