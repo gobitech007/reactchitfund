@@ -66,7 +66,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showBaseAmountNoValidation, setShowBaseAmountNoValidation] = useState<boolean>(false);
   const [isCreatingChit,  setIsCreatingChit] = useState<boolean>(false);
-  const [notification, setNotification] = useState<{show: boolean, message: string}>({
+  const [,setNotification] = useState<{show: boolean, message: string}>({
     show: false,
     message: ''
   });
