@@ -393,7 +393,7 @@ export const analyzeUserCreationIssues = () => {
   return analysis;
 };
 
-export default {
+const debugHelpersUtils = {
   initializeDebugHelpers,
   logUserCreationAttempt,
   analyzeUserCreationIssues,
@@ -404,3 +404,5 @@ export default {
   showLastError,
   exportLogsToConsole
 };
+
+export default debugHelpersUtils;
