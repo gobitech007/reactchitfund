@@ -110,4 +110,6 @@ export const safeWindow = {
   },
 };
 
-export default { safeLocalStorage, safeSessionStorage, safeWindow };
+const safeStorageUtils = { safeLocalStorage, safeSessionStorage, safeWindow };
+
+export default safeStorageUtils;
