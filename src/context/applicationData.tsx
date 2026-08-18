@@ -121,7 +121,7 @@ export const useDynamicApiStore = (key: ApiEndpointKey, options: DynamicApiOptio
             // console.log('Searching through all user properties for ID-like values');
             
             // Look for any property that looks like an ID
-            for (const [key, value] of Object.entries(currentUser)) {
+            for (const [, value] of Object.entries(currentUser)) {
               if (typeof value === 'string' || typeof value === 'number') {
                 const strValue = String(value);
                 // Check for UUID format or numeric ID
@@ -225,7 +225,7 @@ export const useDynamicApiStore = (key: ApiEndpointKey, options: DynamicApiOptio
       // isMounted = false;
       if (interval) clearInterval(interval);
     };
-  }, [key, intervalTime, isAuthenticated, currentUser, setStore, ...params]);
+  }, [key, intervalTime, isAuthenticated, currentUser, setStore, params]);
 
   return store[key] as any;
 };
