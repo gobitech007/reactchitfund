@@ -127,15 +127,6 @@ export const apiRequest = async <T = any>(
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
       
-      // Debug: Log token info for auth-related endpoints
-      if (endpoint.startsWith('/auth/') && isDebugEnabled()) {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          // console.log('Token payload for', endpoint, ':', payload);
-        } catch (e) {
-          // console.warn('Could not parse token payload for debugging:', e);
-        }
-      }
     }
 
     // Prepare request options
@@ -168,15 +159,6 @@ export const apiRequest = async <T = any>(
       if (response.status === 401) {
         // console.error('Authentication failed for endpoint:', endpoint);
         // console.error('Token used:', token ? 'Present' : 'Missing');
-        if (token && isDebugEnabled()) {
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            // console.error('Token payload:', payload);
-            // console.error('Token expiry:', new Date(payload.exp * 1000));
-          } catch (e) {
-            // console.error('Could not parse token for debugging:', e);
-          }
-        }
         errorMessage = data?.detail || 'Authentication failed - invalid or expired token';
       }
       
