@@ -105,11 +105,7 @@ class Register extends React.Component<RegisterPropsWithTranslation, RegisterSta
   isFormValid = () => {
     const {
       fullName,
-      email,
       mobileNumber,
-      birthDay,
-      birthMonth,
-      birthYear,
       aadharNumber,
       pin,
       errors,
