@@ -32,7 +32,6 @@ import TransactionStatusSummary from '../components/TransactionStatusSummary';
 import TransactionQuickActions from '../components/TransactionQuickActions';
 import { useAuth } from '../context/AuthContext';
 import { hasPermission, ROLES } from '../utils/role-utils';
-import {queryClient} from '../services/queryClient';
 
 
 // Map API transaction to UI transaction model
@@ -96,8 +95,8 @@ const TransactionHistory = () => {
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [serverPaging, setServerPaging] = useState<boolean>(false);
+  const [, setTotalCount] = useState<number>(0);
+  const [serverPaging] = useState<boolean>(false);
   
   // Filter states
   const [filters, setFilters] = useState<TransactionFilters>({});
@@ -174,7 +173,7 @@ const TransactionHistory = () => {
     };
 
     fetchFilterData();
-  }, []);
+  }, [canViewAllTransactions]);
 
   // Fetch transactions from API
   useEffect(() => {
@@ -222,38 +221,6 @@ const TransactionHistory = () => {
         setError(err.message || 'Failed to load transactions');
         setLoading(false);
         
-        // For development/testing, use mock data if API fails
-        const mockTransactions = [
-          {
-            chit_id: 1,
-            user_id: 1,
-            chit_no: 1,
-            amount: 1000,
-            week: 1,
-            is_paid: 'Y',
-            payment: {
-              pay_id: 1,
-              transaction_id: 'TXN123456',
-              pay_type: 'card',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          },
-          {
-            chit_id: 2,
-            user_id: 1,
-            chit_no: 1,
-            amount: 1000,
-            week: 2,
-            is_paid: 'N',
-            payment: null
-          }
-        ];
-        
-        // Uncomment the following line to use mock data during development
-        // const mappedTransactions = mockTransactions.map(mapTransactionForUI);
-        // setTransactions(mappedTransactions);
-        // setTotalCount(mockTransactions.length);
         
         // For production, just set empty transactions
         setTransactions([]);
