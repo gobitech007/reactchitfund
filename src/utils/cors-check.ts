@@ -33,6 +33,8 @@ export const performCorsCheck = async (): Promise<void> => {
   }
 };
 
-export default {
+const corsCheckUtils = {
   performCorsCheck
 };
+
+export default corsCheckUtils;
