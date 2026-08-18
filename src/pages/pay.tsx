@@ -1024,14 +1024,6 @@ const CellSelection: React.FC<CellSelectionProps> = ({ navigate }) => {
                   const week = currentWeek || '1st';
                   const month = currentMonth || 'October';
                   
-                  // Test 1: Simple hardcoded values
-                  const test1 = t('pay.weekOf', { week: '2nd', month: 'December' });
-                  // console.log('Test 1 (hardcoded):', test1);
-                  
-                  // Test 2: With variables
-                  const test2 = t('pay.weekOf', { week: week, month: month });
-                  // console.log('Test 2 (variables):', test2);
-                  
                   // Test 3: Alternative syntax
                   const test3 = t('pay.weekOf', { week, month });
                   // console.log('Test 3 (shorthand):', test3);
