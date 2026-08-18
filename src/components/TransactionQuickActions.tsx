@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import {
   Download as ExportIcon,
-  FilterList as FilterIcon,
   Refresh as RefreshIcon,
   Print as PrintIcon,
   Email as EmailIcon,
