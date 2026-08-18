@@ -40,7 +40,7 @@ export const SessionTimeoutProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
-  const { handleLogout } = useSessionTimeout({
+  useSessionTimeout({
     timeout: 15 * 60 * 1000,
     warningTime: 2 * 60 * 1000,
     onWarning: handleWarning,
